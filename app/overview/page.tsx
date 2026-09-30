@@ -1,12 +1,10 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import StatCards from "@/components/StatCards";
 import AwsIcon from "@/components/AwsIcon";
-import { ec2Instances } from "@/data/ec2Data";
-import { rdsInstances } from "@/data/rdsData";
-import { eksClusters } from "@/data/eksData";
-import { loadBalancers } from "@/data/albData";
-import { s3Buckets } from "@/data/s3Data";
 import {
   BalancerIcon,
   BucketIcon,
@@ -28,12 +26,64 @@ import {
   type Stat,
   type Tone,
 } from "@/components/types";
+import { getEc2Instances, getS3Buckets } from "@/lib/dashboardApi";
+import type { Ec2Instance } from "@/data/ec2Data";
+import type { S3Bucket } from "@/data/s3Data";
 
-const ec2Running = ec2Instances.filter((i) => i.status === "running").length;
-const rdsAvailable = rdsInstances.filter((r) => r.status === "available").length;
-const eksActive = eksClusters.filter((c) => c.status === "active").length;
-const albActive = loadBalancers.filter((lb) => lb.status === "active").length;
-const s3Blocked = s3Buckets.filter((b) => b.publicAccess === "Blocked").length;
+export default function OverviewPage() {
+  const [ec2Instances, setEc2Instances] = useState<Ec2Instance[]>([]);
+  const [s3Buckets, setS3Buckets] = useState<S3Bucket[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    const fetchData = async (force = false) => {
+      try {
+        // Fetch EC2 and S3 in parallel
+        const [ec2Data, s3Data] = await Promise.all([
+          getEc2Instances("all", force),
+          getS3Buckets("all", force),
+        ]);
+
+        if (!active) return;
+
+        if (ec2Data.success) {
+          setEc2Instances(ec2Data.instances || []);
+        }
+        if (s3Data.success) {
+          setS3Buckets(s3Data.buckets || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch overview data:", error);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    fetchData();
+
+    // Auto-refresh every 2 minutes
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") fetchData(true);
+    }, 2 * 60 * 1000);
+
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Empty arrays for services not yet implemented with live data
+  const rdsInstances: any[] = [];
+  const eksClusters: any[] = [];
+  const loadBalancers: any[] = [];
+
+  const ec2Running = ec2Instances.filter((i) => i.status === "running").length;
+  const rdsAvailable = rdsInstances.filter((r) => r.status === "available").length;
+  const eksActive = eksClusters.filter((c) => c.status === "active").length;
+  const albActive = loadBalancers.filter((lb) => lb.status === "active").length;
+  const s3Blocked = s3Buckets.filter((b) => b.publicAccess === "Blocked").length;
 
 const totalResources =
   ec2Instances.length +
@@ -76,7 +126,12 @@ const envCounts = allEnvironments
   }))
   .sort((a, b) => b.count - a.count);
 
-const healthPct = Math.round((healthyResources / totalResources) * 100);
+// Guard every ratio below: with no resources yet these were 0/0 -> NaN, which
+// React renders as a broken/invalid bar width.
+const safePct = (value: number, of: number) =>
+  of === 0 ? 0 : Math.round((value / of) * 100);
+
+const healthPct = safePct(healthyResources, totalResources);
 
 const stats: Stat[] = [
   {
@@ -236,7 +291,19 @@ const services: ServiceCard[] = [
   },
 ];
 
-export default function OverviewPage() {
+  if (loading) {
+    return (
+      <>
+        <Header title="Overview" />
+        <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+          <div className="flex items-center justify-center py-12">
+            <p className="text-ink-muted">Loading overview data...</p>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <Header title="Overview" />
@@ -247,8 +314,7 @@ export default function OverviewPage() {
             Infrastructure Overview
           </h2>
           <p className="mt-1.5 text-[13.5px] text-ink-muted">
-            Mock inventory across every service. Pick a service to drill into
-            its resources.
+            Live AWS infrastructure overview. Pick a service to drill into its resources.
           </p>
         </div>
 
@@ -314,9 +380,7 @@ export default function OverviewPage() {
                       barTone[service.healthy === service.count ? "ok" : "warn"]
                     }`}
                     style={{
-                      width: `${Math.round(
-                        (service.healthy / service.count) * 100
-                      )}%`,
+                      width: `${safePct(service.healthy, service.count)}%`,
                     }}
                   />
                 </div>
@@ -371,7 +435,7 @@ export default function OverviewPage() {
                         barTone[envTone[env] ?? "neutral"]
                       }`}
                       style={{
-                        width: `${Math.round((count / totalResources) * 100)}%`,
+                        width: `${safePct(count, totalResources)}%`,
                       }}
                     />
                   </div>
@@ -434,8 +498,8 @@ export default function OverviewPage() {
             </div>
 
             <p className="mt-4 text-[11px] leading-relaxed text-ink-faint">
-              All figures are computed from the local mock data files. No AWS
-              account is connected.
+              Showing live data from your AWS accounts. EC2 data is real-time,
+              other services coming soon.
             </p>
           </div>
         </section>
