@@ -2,101 +2,282 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { navItems } from "./nav";
+import { useState, useCallback, useEffect } from "react";
+import { navSections, mobileNavItems } from "./nav";
 import AwsIcon from "./AwsIcon";
+import ThemeToggle from "./ThemeToggle";
+import { ChevronRightIcon } from "./Icons";
 
-const iconMap: Record<string, "ec2" | "rds" | "eks" | "elb" | "s3"> = {
-  EC2: "ec2",
-  RDS: "rds",
-  EKS: "eks",
-  ALB: "elb",
-  S3: "s3",
+const awsIconMap: Record<string, "ec2" | "rds" | "eks" | "elb" | "s3"> = {
+  "EC2 Instances": "ec2",
+  "RDS Databases": "rds",
+  "EKS Clusters": "eks",
+  "Load Balancers": "elb",
+  "S3 Storage": "s3",
 };
+
+type CollapsedState = Record<string, boolean>;
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [collapsedSections, setCollapsedSections] = useState<CollapsedState>(() => {
+    // Initialize with default collapsed states
+    const initial: CollapsedState = {};
+    navSections.forEach((section) => {
+      if (section.collapsible && section.defaultCollapsed) {
+        initial[section.id] = true;
+      }
+    });
+    return initial;
+  });
+
+  // Load saved collapsed state from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("sidebar-collapsed-sections");
+      if (saved) {
+        setCollapsedSections(JSON.parse(saved));
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, []);
+
+  const toggleSection = useCallback((sectionId: string) => {
+    setCollapsedSections((prev) => {
+      const next = { ...prev, [sectionId]: !prev[sectionId] };
+      try {
+        localStorage.setItem("sidebar-collapsed-sections", JSON.stringify(next));
+      } catch {
+        // Ignore localStorage errors
+      }
+      return next;
+    });
+  }, []);
 
   return (
-    <aside className="hidden w-64 shrink-0 flex-col border-r border-line-soft bg-surface md:flex">
-      <Link
-        href="/overview"
-        className="flex h-16 items-center gap-3 border-b border-line-soft px-5 transition-all duration-200 hover:bg-surface-raised"
+    <>
+      {/* Desktop Sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 flex flex-col border-r border-line bg-surface transition-all duration-300 md:static ${
+          isCollapsed ? "w-[72px]" : "w-64"
+        } hidden md:flex`}
       >
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-violet text-[14px] font-bold text-white shadow-sm transition-transform duration-200 hover:scale-110">
-          A
-        </span>
-        <span className="flex flex-col leading-tight">
-          <span className="text-[14px] font-semibold tracking-tight">
-            AWS Dashboard
-          </span>
-          <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-ink-faint">
-            Infrastructure
-          </span>
-        </span>
-      </Link>
+        {/* Logo / Brand */}
+        <div className="flex h-16 items-center border-b border-line px-4">
+          <Link
+            href="/overview"
+            className={`flex items-center gap-3 transition-all duration-200 ${
+              isCollapsed ? "justify-center" : ""
+            }`}
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-violet text-base font-bold text-white shadow-sm">
+              C
+            </span>
+            {!isCollapsed && (
+              <span className="flex flex-col leading-tight">
+                <span className="text-sm font-semibold tracking-tight text-ink">
+                  CloudOps
+                </span>
+                <span className="text-[10px] font-medium text-ink-faint">
+                  Operations Platform
+                </span>
+              </span>
+            )}
+          </Link>
+        </div>
 
-      <nav className="flex flex-col gap-1 p-3">
-        <p className="px-3 pb-1.5 pt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-faint">
-          Services
-        </p>
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto px-3 py-4">
+          <div className="flex flex-col gap-1">
+            {navSections.map((section) => {
+              const isSectionCollapsed = collapsedSections[section.id];
+              const hasActiveItem = section.items.some(
+                (item) => pathname === item.href
+              );
 
-        {navItems.map(({ label, href, Icon, count }) => {
-          const active = pathname === href;
-          const awsIcon = iconMap[label];
+              return (
+                <div key={section.id} className="mb-2">
+                  {/* Section Header */}
+                  {!isCollapsed ? (
+                    section.collapsible ? (
+                      <button
+                        onClick={() => toggleSection(section.id)}
+                        className="group mb-1 flex w-full items-center justify-between px-3 py-1.5 text-left"
+                      >
+                        <span className="text-[10px] font-semibold uppercase tracking-widest text-ink-faint">
+                          {section.title}
+                        </span>
+                        <ChevronRightIcon
+                          className={`h-3 w-3 text-ink-faint transition-transform duration-200 ${
+                            isSectionCollapsed ? "" : "rotate-90"
+                          }`}
+                        />
+                      </button>
+                    ) : (
+                      <p className="mb-1 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-ink-faint">
+                        {section.title}
+                      </p>
+                    )
+                  ) : (
+                    <div className="my-2 border-t border-line-soft" />
+                  )}
+
+                  {/* Section Items */}
+                  {(!section.collapsible || !isSectionCollapsed || isCollapsed) && (
+                    <div className="flex flex-col gap-0.5">
+                      {section.items.map((item) => {
+                        const active = pathname === item.href;
+                        const awsIcon = awsIconMap[item.label];
+
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            aria-current={active ? "page" : undefined}
+                            title={isCollapsed ? item.label : undefined}
+                            className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                              isCollapsed ? "justify-center" : ""
+                            } ${
+                              active
+                                ? "bg-accent-soft text-accent shadow-xs"
+                                : "text-ink-muted hover:bg-surface-raised hover:text-ink"
+                            }`}
+                          >
+                            {/* Active indicator */}
+                            {active && (
+                              <span className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-accent" />
+                            )}
+
+                            {/* Icon */}
+                            <span
+                              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-200 ${
+                                active
+                                  ? "bg-accent/10"
+                                  : "bg-transparent group-hover:bg-surface-sunken"
+                              }`}
+                            >
+                              {awsIcon ? (
+                                <AwsIcon
+                                  service={awsIcon}
+                                  className={`h-[18px] w-[18px] transition-transform duration-200 ${
+                                    active ? "" : "group-hover:scale-110"
+                                  }`}
+                                />
+                              ) : (
+                                <item.Icon
+                                  className={`h-[18px] w-[18px] transition-transform duration-200 ${
+                                    active ? "" : "group-hover:scale-110"
+                                  }`}
+                                />
+                              )}
+                            </span>
+
+                            {/* Label */}
+                            {!isCollapsed && (
+                              <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                                <span className="truncate">{item.label}</span>
+                                {item.placeholder && (
+                                  <span className="shrink-0 rounded bg-surface-sunken px-1.5 py-0.5 text-[9px] font-medium text-ink-faint">
+                                    Soon
+                                  </span>
+                                )}
+                              </span>
+                            )}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Collapsed section indicator */}
+                  {section.collapsible && isSectionCollapsed && !isCollapsed && hasActiveItem && (
+                    <div className="ml-3 mt-1 flex items-center gap-2 text-[10px] text-accent">
+                      <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                      <span>Active item in section</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </nav>
+
+        {/* Footer */}
+        <div className="border-t border-line p-3">
+          {/* Theme toggle and collapse button */}
+          <div
+            className={`flex items-center gap-2 ${
+              isCollapsed ? "flex-col" : "justify-between"
+            }`}
+          >
+            <ThemeToggle />
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-muted transition-all duration-200 hover:bg-surface-raised hover:text-ink"
+              aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={`h-4 w-4 transition-transform duration-300 ${
+                  isCollapsed ? "rotate-180" : ""
+                }`}
+              >
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Status card - only when expanded */}
+          {!isCollapsed && (
+            <div className="mt-3 rounded-xl border border-line bg-surface-raised p-3">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ok opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-ok" />
+                </span>
+                <p className="text-xs font-medium text-ink-muted">
+                  System Healthy
+                </p>
+              </div>
+              <p className="mt-1.5 text-[10px] text-ink-faint">
+                All AWS services operational
+              </p>
+            </div>
+          )}
+        </div>
+      </aside>
+
+      {/* Mobile bottom navigation */}
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex h-16 items-center justify-around border-t border-line bg-surface/95 backdrop-blur-lg md:hidden">
+        {mobileNavItems.map((item) => {
+          const active = pathname === item.href;
+          const awsIcon = awsIconMap[item.label];
 
           return (
             <Link
-              key={label}
-              href={href}
-              aria-current={active ? "page" : undefined}
-              className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200 ${
-                active
-                  ? "border border-accent/25 bg-accent/10 font-semibold text-accent shadow-sm"
-                  : "border border-transparent text-ink-muted hover:scale-[1.02] hover:border-line hover:bg-surface-raised hover:text-ink hover:shadow-sm"
+              key={item.href}
+              href={item.href}
+              className={`flex flex-col items-center gap-1 px-3 py-2 ${
+                active ? "text-accent" : "text-ink-muted"
               }`}
             >
-              {active && (
-                <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-accent transition-all duration-300" />
-              )}
               {awsIcon ? (
-                <AwsIcon
-                  service={awsIcon}
-                  className={`h-[17px] w-[17px] transition-transform duration-200 ${
-                    active ? "" : "group-hover:scale-110"
-                  }`}
-                />
+                <AwsIcon service={awsIcon} className="h-5 w-5" />
               ) : (
-                <Icon className="h-[17px] w-[17px]" />
+                <item.Icon className="h-5 w-5" />
               )}
-              <span className="transition-transform duration-200 group-hover:translate-x-0.5">
-                {label}
-              </span>
-              {count !== null && (
-                <span
-                  className={`ml-auto rounded-md px-1.5 py-0.5 text-[10px] font-semibold tabular-nums transition-all duration-200 ${
-                    active
-                      ? "bg-accent/15 text-accent"
-                      : "bg-surface-raised text-ink-faint group-hover:bg-accent/10 group-hover:text-accent"
-                  }`}
-                >
-                  {count}
-                </span>
-              )}
+              <span className="text-[10px] font-medium">{item.label}</span>
             </Link>
           );
         })}
       </nav>
-
-      <div className="mt-auto p-3">
-        <div className="rounded-xl border border-line bg-surface-raised p-3.5">
-          <p className="text-[11px] font-semibold text-ink-muted">
-            UI Prototype
-          </p>
-          <p className="mt-1 text-[11px] leading-relaxed text-ink-faint">
-            Mock data only. No AWS account is connected.
-          </p>
-        </div>
-      </div>
-    </aside>
+    </>
   );
 }

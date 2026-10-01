@@ -41,24 +41,27 @@ export type Stat = {
   note: string;
 };
 
+/** Badge tone styles - premium, subtle appearance */
 export const badgeTone: Record<Tone, string> = {
-  ok: "border-ok/30 bg-ok/10 text-ok",
-  halt: "border-halt/30 bg-halt/10 text-halt",
-  warn: "border-warn/30 bg-warn/10 text-warn",
-  info: "border-accent/30 bg-accent/10 text-accent",
-  violet: "border-violet/30 bg-violet/10 text-violet",
+  ok: "border-ok/20 bg-ok-soft text-ok",
+  halt: "border-halt/20 bg-halt-soft text-halt",
+  warn: "border-warn/20 bg-warn-soft text-warn",
+  info: "border-accent/20 bg-accent-soft text-accent",
+  violet: "border-violet/20 bg-violet-soft text-violet",
   neutral: "border-line bg-surface-raised text-ink-muted",
 };
 
+/** Tile/icon container tone styles */
 export const tileTone: Record<Tone, string> = {
-  ok: "border-ok/20 bg-ok/10 text-ok",
-  halt: "border-halt/20 bg-halt/10 text-halt",
-  warn: "border-warn/20 bg-warn/10 text-warn",
-  info: "border-accent/20 bg-accent/10 text-accent",
-  violet: "border-violet/20 bg-violet/10 text-violet",
+  ok: "border-ok/15 bg-ok-soft text-ok",
+  halt: "border-halt/15 bg-halt-soft text-halt",
+  warn: "border-warn/15 bg-warn-soft text-warn",
+  info: "border-accent/15 bg-accent-soft text-accent",
+  violet: "border-violet/15 bg-violet-soft text-violet",
   neutral: "border-line bg-surface-raised text-ink-muted",
 };
 
+/** Progress bar tone styles */
 export const barTone: Record<Tone, string> = {
   ok: "bg-ok",
   halt: "bg-halt",
@@ -68,6 +71,7 @@ export const barTone: Record<Tone, string> = {
   neutral: "bg-ink-faint",
 };
 
+/** Status dot tone styles */
 export const dotTone: Record<Tone, string> = {
   ok: "bg-ok",
   halt: "bg-halt",

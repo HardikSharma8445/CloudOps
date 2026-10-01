@@ -9,6 +9,8 @@ type Props = {
   /** Fade the button in only on row/field hover. */
   subtle?: boolean;
   className?: string;
+  /** Size variant */
+  size?: "sm" | "md";
 };
 
 function legacyCopy(text: string) {
@@ -27,8 +29,6 @@ function legacyCopy(text: string) {
 }
 
 async function writeToClipboard(text: string) {
-  // The async Clipboard API needs a secure context AND document focus, so fall
-  // back to the legacy path whenever it is unavailable or gets rejected.
   if (navigator.clipboard?.writeText) {
     try {
       await navigator.clipboard.writeText(text);
@@ -38,7 +38,6 @@ async function writeToClipboard(text: string) {
       return;
     }
   }
-
   legacyCopy(text);
 }
 
@@ -47,6 +46,7 @@ export default function CopyButton({
   label = "value",
   subtle = false,
   className = "",
+  size = "sm",
 }: Props) {
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -58,7 +58,6 @@ export default function CopyButton({
   }, []);
 
   const handleCopy = async (event: React.MouseEvent) => {
-    // Never let a copy click bubble into a row click / drawer open.
     event.stopPropagation();
 
     try {
@@ -71,16 +70,28 @@ export default function CopyButton({
     }
   };
 
+  const sizeClasses = {
+    sm: "h-6 w-6",
+    md: "h-8 w-8",
+  };
+
+  const iconSizes = {
+    sm: "h-3 w-3",
+    md: "h-3.5 w-3.5",
+  };
+
   return (
     <button
       type="button"
       onClick={handleCopy}
       title={copied ? "Copied" : `Copy ${label}`}
       aria-label={copied ? `Copied ${label}` : `Copy ${label}`}
-      className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
+      className={`inline-flex shrink-0 items-center justify-center rounded-lg border transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+        sizeClasses[size]
+      } ${
         copied
-          ? "scale-110 border-ok/40 bg-ok/10 text-ok"
-          : "border-line bg-surface-raised text-ink-faint hover:scale-105 hover:border-accent/40 hover:bg-accent/10 hover:text-accent"
+          ? "scale-105 border-ok/30 bg-ok-soft text-ok"
+          : "border-line bg-surface-raised text-ink-faint hover:scale-105 hover:border-accent/30 hover:bg-accent-soft hover:text-accent"
       } ${
         subtle && !copied
           ? "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
@@ -88,9 +99,9 @@ export default function CopyButton({
       } ${className}`}
     >
       {copied ? (
-        <CheckIcon className="pop-enter h-3 w-3" />
+        <CheckIcon className={`pop-enter ${iconSizes[size]}`} />
       ) : (
-        <CopyIcon className="h-3 w-3" />
+        <CopyIcon className={iconSizes[size]} />
       )}
       <span className="sr-only" aria-live="polite">
         {copied ? "Copied to clipboard" : ""}

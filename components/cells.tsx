@@ -17,14 +17,14 @@ export function NameCell({
   avatarText?: string;
 }) {
   return (
-    <div className="flex items-center gap-2.5 whitespace-nowrap">
+    <div className="flex items-center gap-3 whitespace-nowrap">
       <span
         aria-hidden="true"
-        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border text-[10px] font-bold tracking-wide ${badgeTone[tone]}`}
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-[10px] font-bold tracking-wide ${badgeTone[tone]}`}
       >
         {initials(avatarText ?? name)}
       </span>
-      <span className="font-semibold text-ink">{name}</span>
+      <span className="font-medium text-ink">{name}</span>
     </div>
   );
 }
@@ -44,7 +44,7 @@ export function CopyCell({
 
   return (
     <div className="flex items-center gap-2 whitespace-nowrap">
-      <span className="font-mono text-[12px] text-ink-muted" title={value}>
+      <span className="font-mono text-xs text-ink-muted" title={value}>
         {shown}
       </span>
       <CopyButton value={value} label={`${label} ${value}`} subtle />
@@ -55,7 +55,7 @@ export function CopyCell({
 /** Bordered pill used for instance types, engine versions, etc. */
 export function ChipCell({ value }: { value: string }) {
   return (
-    <span className="whitespace-nowrap rounded-md border border-line bg-surface-raised px-2 py-0.5 font-mono text-[11.5px] text-ink-muted">
+    <span className="inline-flex whitespace-nowrap rounded-lg border border-line bg-surface-raised px-2.5 py-1 font-mono text-[11px] font-medium text-ink-muted">
       {value}
     </span>
   );
@@ -71,8 +71,8 @@ export function RegionCell({
 }) {
   return (
     <div className="flex flex-col whitespace-nowrap leading-tight">
-      <span className="font-medium text-ink">{regionName}</span>
-      <span className="font-mono text-[10.5px] text-ink-faint">{region}</span>
+      <span className="text-sm font-medium text-ink">{regionName}</span>
+      <span className="font-mono text-[10px] text-ink-faint">{region}</span>
     </div>
   );
 }
@@ -81,7 +81,7 @@ export function RegionCell({
 export function EnvCell({ value }: { value: string }) {
   return (
     <span
-      className={`inline-flex whitespace-nowrap rounded-md border px-2 py-0.5 text-[11px] font-semibold ${
+      className={`inline-flex whitespace-nowrap rounded-lg border px-2.5 py-1 text-[11px] font-semibold ${
         badgeTone[envTone[value] ?? "neutral"]
       }`}
     >
@@ -100,8 +100,44 @@ export function StackCell({
 }) {
   return (
     <div className="flex flex-col whitespace-nowrap leading-tight">
-      <span className="font-medium text-ink">{primary}</span>
-      <span className="text-[10.5px] text-ink-faint">{secondary}</span>
+      <span className="text-sm font-medium text-ink">{primary}</span>
+      <span className="text-[10px] text-ink-faint">{secondary}</span>
     </div>
+  );
+}
+
+/** Simple text cell with optional muted styling */
+export function TextCell({
+  value,
+  muted = false,
+}: {
+  value: string;
+  muted?: boolean;
+}) {
+  return (
+    <span className={`text-sm ${muted ? "text-ink-muted" : "text-ink"}`}>
+      {value}
+    </span>
+  );
+}
+
+/** Date/time cell with formatted display */
+export function DateCell({ value }: { value: string }) {
+  return <span className="text-xs text-ink-muted">{value}</span>;
+}
+
+/** Number cell with tabular numerals */
+export function NumberCell({
+  value,
+  suffix,
+}: {
+  value: number | string;
+  suffix?: string;
+}) {
+  return (
+    <span className="font-medium tabular-nums text-ink">
+      {value}
+      {suffix && <span className="ml-1 text-ink-faint">{suffix}</span>}
+    </span>
   );
 }

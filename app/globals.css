@@ -6,57 +6,85 @@
 :root {
   color-scheme: light;
 
-  --c-canvas: #f4f6fa;
+  /* Premium Light Theme - Clean, Airy, Professional */
+  --c-canvas: #f8fafc;
   --c-surface: #ffffff;
-  --c-surface-raised: #f4f6fa;
-  --c-surface-sunken: #eef1f6;
-  --c-line: #e2e7ef;
-  --c-line-soft: #ebeef4;
+  --c-surface-raised: #f1f5f9;
+  --c-surface-sunken: #e2e8f0;
+  --c-line: #e2e8f0;
+  --c-line-soft: #f1f5f9;
   --c-ink: #0f172a;
-  --c-ink-muted: #5a6577;
-  --c-ink-faint: #8b95a6;
-  --c-accent: #2f6df6;
-  --c-accent-soft: #e8efff;
-  --c-ok: #0f9d58;
-  --c-halt: #dc3545;
-  --c-warn: #c2751a;
-  --c-violet: #7c5cf0;
+  --c-ink-muted: #64748b;
+  --c-ink-faint: #94a3b8;
+  --c-accent: #3b82f6;
+  --c-accent-soft: #eff6ff;
+  --c-accent-hover: #2563eb;
+  --c-ok: #10b981;
+  --c-ok-soft: #ecfdf5;
+  --c-halt: #ef4444;
+  --c-halt-soft: #fef2f2;
+  --c-warn: #f59e0b;
+  --c-warn-soft: #fffbeb;
+  --c-violet: #8b5cf6;
+  --c-violet-soft: #f5f3ff;
 
-  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.05),
-    0 1px 3px rgba(16, 24, 40, 0.06);
-  --shadow-drawer: -16px 0 48px rgba(16, 24, 40, 0.16);
+  /* Premium Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+  --shadow-drawer: -8px 0 32px rgba(0, 0, 0, 0.08);
+  --shadow-dropdown: 0 4px 24px rgba(0, 0, 0, 0.12);
+  
+  /* Gradient accents */
   --glow: radial-gradient(
-    900px 380px at 12% -8%,
-    rgba(47, 109, 246, 0.1),
-    transparent 70%
+    800px 300px at 5% -5%,
+    rgba(59, 130, 246, 0.06),
+    transparent 60%
   );
 }
 
 .dark {
   color-scheme: dark;
 
-  --c-canvas: #090d14;
-  --c-surface: #10161f;
-  --c-surface-raised: #161e2a;
-  --c-surface-sunken: #0d1319;
-  --c-line: #232c3b;
-  --c-line-soft: #1a2230;
-  --c-ink: #e8edf5;
-  --c-ink-muted: #8d99ab;
-  --c-ink-faint: #5f6a7a;
-  --c-accent: #5b9bff;
-  --c-accent-soft: #14233d;
-  --c-ok: #35d07f;
-  --c-halt: #f2555a;
-  --c-warn: #e8a33d;
+  /* Premium Dark Theme - Rich, Deep, Sophisticated */
+  --c-canvas: #0c0f17;
+  --c-surface: #131825;
+  --c-surface-raised: #1a2133;
+  --c-surface-sunken: #0a0d14;
+  --c-line: #1e293b;
+  --c-line-soft: #1a2133;
+  --c-ink: #f1f5f9;
+  --c-ink-muted: #94a3b8;
+  --c-ink-faint: #64748b;
+  --c-accent: #60a5fa;
+  --c-accent-soft: #172554;
+  --c-accent-hover: #93c5fd;
+  --c-ok: #34d399;
+  --c-ok-soft: #052e16;
+  --c-halt: #f87171;
+  --c-halt-soft: #450a0a;
+  --c-warn: #fbbf24;
+  --c-warn-soft: #422006;
   --c-violet: #a78bfa;
+  --c-violet-soft: #2e1065;
 
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-drawer: -16px 0 48px rgba(0, 0, 0, 0.5);
+  /* Dark shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+  --shadow-drawer: -8px 0 32px rgba(0, 0, 0, 0.5);
+  --shadow-dropdown: 0 4px 24px rgba(0, 0, 0, 0.5);
+
   --glow: radial-gradient(
-    900px 380px at 12% -8%,
-    rgba(91, 155, 255, 0.1),
-    transparent 70%
+    800px 300px at 5% -5%,
+    rgba(96, 165, 250, 0.08),
+    transparent 60%
   );
 }
 
@@ -72,10 +100,15 @@
   --color-ink-faint: var(--c-ink-faint);
   --color-accent: var(--c-accent);
   --color-accent-soft: var(--c-accent-soft);
+  --color-accent-hover: var(--c-accent-hover);
   --color-ok: var(--c-ok);
+  --color-ok-soft: var(--c-ok-soft);
   --color-halt: var(--c-halt);
+  --color-halt-soft: var(--c-halt-soft);
   --color-warn: var(--c-warn);
+  --color-warn-soft: var(--c-warn-soft);
   --color-violet: var(--c-violet);
+  --color-violet-soft: var(--c-violet-soft);
 
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", sans-serif;
@@ -95,24 +128,33 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Keep the theme switch from flashing mid-transition on colored surfaces. */
+/* Smooth theme transitions */
 body,
 aside,
 header,
+main,
+nav,
+section,
+article,
 table,
 tr,
 td,
 th,
 input,
 button,
+select,
 div,
 span,
 p,
 h1,
 h2,
-h3 {
-  transition: background-color 180ms ease, border-color 180ms ease,
-    color 180ms ease;
+h3,
+h4,
+h5,
+h6,
+a {
+  transition: background-color 200ms ease, border-color 200ms ease,
+    color 200ms ease, box-shadow 200ms ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -125,39 +167,59 @@ h3 {
 }
 
 ::selection {
-  background-color: color-mix(in srgb, var(--c-accent) 30%, transparent);
+  background-color: color-mix(in srgb, var(--c-accent) 25%, transparent);
 }
 
-.shadow-card {
+@utility shadow-xs {
+  box-shadow: var(--shadow-xs);
+}
+
+@utility shadow-card {
   box-shadow: var(--shadow-card);
 }
 
-.shadow-drawer {
+@utility shadow-dropdown {
+  box-shadow: var(--shadow-dropdown);
+}
+
+@utility shadow-drawer {
   box-shadow: var(--shadow-drawer);
 }
 
+/* Page background glow */
 .page-glow {
   background-image: var(--glow);
+  background-attachment: fixed;
 }
 
+/* Modern scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--c-ink-faint) 45%, transparent)
+  scrollbar-color: color-mix(in srgb, var(--c-ink-faint) 30%, transparent)
     transparent;
 }
 
 *::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: color-mix(in srgb, var(--c-ink-faint) 45%, transparent);
+  background-color: color-mix(in srgb, var(--c-ink-faint) 30%, transparent);
   border-radius: 9999px;
-  border: 3px solid transparent;
+  border: 2px solid transparent;
   background-clip: content-box;
 }
 
+*::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--c-ink-faint) 50%, transparent);
+}
+
+/* Animations */
 @keyframes drawer-in {
   from {
     transform: translateX(100%);
@@ -181,7 +243,7 @@ h3 {
 @keyframes rise-in {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -192,11 +254,22 @@ h3 {
 @keyframes pop-in {
   from {
     opacity: 0;
-    transform: scale(0.92);
+    transform: scale(0.95);
   }
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -215,23 +288,216 @@ h3 {
     opacity: 0.6;
   }
   100% {
-    transform: scale(1.4);
+    transform: scale(1.5);
     opacity: 0;
   }
 }
 
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Animation utility classes */
 .drawer-enter {
-  animation: drawer-in 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: drawer-in 280ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .overlay-enter {
-  animation: fade-in 220ms ease-out;
+  animation: fade-in 180ms ease-out;
 }
 
 .rise-enter {
-  animation: rise-in 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: rise-in 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .pop-enter {
-  animation: pop-in 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: pop-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.slide-down-enter {
+  animation: slide-down 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--c-surface-sunken) 0%,
+    var(--c-surface) 50%,
+    var(--c-surface-sunken) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+/* Focus styles */
+.focus-ring {
+  outline: none;
+}
+.focus-ring:focus-visible {
+  box-shadow: 0 0 0 2px var(--c-canvas), 0 0 0 4px color-mix(in srgb, var(--c-accent) 40%, transparent);
+}
+
+/* Card base styles */
+.card {
+  border-radius: 1rem;
+  border: 1px solid var(--c-line);
+  background-color: var(--c-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.card-interactive {
+  border-radius: 1rem;
+  border: 1px solid var(--c-line);
+  background-color: var(--c-surface);
+  box-shadow: var(--shadow-card);
+  transition: all 200ms ease;
+}
+.card-interactive:hover {
+  border-color: color-mix(in srgb, var(--c-accent) 20%, transparent);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Button base styles */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  font-weight: 500;
+  transition: all 200ms ease;
+  outline: none;
+}
+.btn:focus-visible {
+  box-shadow: 0 0 0 2px var(--c-canvas), 0 0 0 4px color-mix(in srgb, var(--c-accent) 40%, transparent);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  font-weight: 500;
+  transition: all 200ms ease;
+  background-color: var(--c-accent);
+  color: white;
+}
+.btn-primary:hover {
+  background-color: var(--c-accent-hover);
+}
+.btn-primary:active {
+  transform: scale(0.98);
+}
+.btn-primary:focus-visible {
+  box-shadow: 0 0 0 2px var(--c-canvas), 0 0 0 4px color-mix(in srgb, var(--c-accent) 40%, transparent);
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  font-weight: 500;
+  transition: all 200ms ease;
+  border: 1px solid var(--c-line);
+  background-color: var(--c-surface);
+}
+.btn-secondary:hover {
+  background-color: var(--c-surface-raised);
+  border-color: color-mix(in srgb, var(--c-accent) 30%, transparent);
+}
+.btn-secondary:active {
+  transform: scale(0.98);
+}
+.btn-secondary:focus-visible {
+  box-shadow: 0 0 0 2px var(--c-canvas), 0 0 0 4px color-mix(in srgb, var(--c-accent) 40%, transparent);
+}
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  font-weight: 500;
+  transition: all 200ms ease;
+}
+.btn-ghost:hover {
+  background-color: var(--c-surface-raised);
+}
+.btn-ghost:active {
+  transform: scale(0.98);
+}
+.btn-ghost:focus-visible {
+  box-shadow: 0 0 0 2px var(--c-canvas), 0 0 0 4px color-mix(in srgb, var(--c-accent) 40%, transparent);
+}
+.btn-ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Input base styles */
+.input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid var(--c-line);
+  background-color: var(--c-surface);
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  color: var(--c-ink);
+  transition: all 200ms ease;
+}
+.input::placeholder {
+  color: var(--c-ink-faint);
+}
+.input:focus {
+  border-color: color-mix(in srgb, var(--c-accent) 50%, transparent);
+  outline: none;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--c-accent) 10%, transparent);
+}
+
+/* Badge base styles */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 9999px;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Skeleton loading */
+.skeleton {
+  border-radius: 0.5rem;
+  background-color: var(--c-surface-sunken);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
