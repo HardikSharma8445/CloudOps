@@ -9,12 +9,14 @@ import { badgeTone, envTone, initials, type Tone } from "./types";
  */
 export function NameCell({
   name,
-  tone,
+  tone = "neutral",
   avatarText,
+  metadata,
 }: {
   name: string;
-  tone: Tone;
+  tone?: Tone;
   avatarText?: string;
+  metadata?: string;
 }) {
   return (
     <div className="flex items-center gap-3 whitespace-nowrap">
@@ -24,7 +26,12 @@ export function NameCell({
       >
         {initials(avatarText ?? name)}
       </span>
-      <span className="font-medium text-ink">{name}</span>
+      <div className="flex flex-col">
+        <span className="font-medium text-ink">{name}</span>
+        {metadata && (
+          <span className="text-[10px] text-ink-faint font-mono">{metadata}</span>
+        )}
+      </div>
     </div>
   );
 }
@@ -121,11 +128,6 @@ export function TextCell({
   );
 }
 
-/** Date/time cell with formatted display */
-export function DateCell({ value }: { value: string }) {
-  return <span className="text-xs text-ink-muted">{value}</span>;
-}
-
 /** Number cell with tabular numerals */
 export function NumberCell({
   value,
@@ -140,4 +142,61 @@ export function NumberCell({
       {suffix && <span className="ml-1 text-ink-faint">{suffix}</span>}
     </span>
   );
+}
+
+/** Status cell with colored pill */
+export function StatusCell({
+  status,
+  tone,
+  pulse = false,
+}: {
+  status: string;
+  tone: Tone;
+  pulse?: boolean;
+}) {
+  return (
+    <span
+      className={`inline-flex whitespace-nowrap rounded-lg border px-2.5 py-1 text-[11px] font-semibold ${badgeTone[tone]} ${
+        pulse ? "animate-pulse" : ""
+      }`}
+    >
+      {status}
+    </span>
+  );
+}
+
+/** ARN cell with copy functionality */
+export function ArnCell({ arn }: { arn: string }) {
+  return <CopyCell value={arn} label="ARN" truncate={40} />;
+}
+
+/** Tags cell showing count with tooltip */
+export function TagsCell({ tags }: { tags: Record<string, string> }) {
+  const tagCount = Object.keys(tags).length;
+  
+  if (tagCount === 0) {
+    return <span className="text-ink-faint text-xs">No tags</span>;
+  }
+
+  const tagText = Object.entries(tags)
+    .slice(0, 3)
+    .map(([key, value]) => `${key}: ${value}`)
+    .join(", ");
+  
+  const moreCount = tagCount - 3;
+  const displayText = moreCount > 0 ? `${tagText} +${moreCount} more` : tagText;
+
+  return (
+    <span 
+      className="text-xs text-ink-muted cursor-help" 
+      title={displayText}
+    >
+      {tagCount} tag{tagCount !== 1 ? 's' : ''}
+    </span>
+  );
+}
+
+/** Date cell with consistent formatting */
+export function DateCell({ date }: { date: string }) {
+  return <span className="text-xs text-ink-muted">{date}</span>;
 }

@@ -382,8 +382,8 @@ export default function Header({
                       <div className="my-2 border-t border-line-soft" />
                     )}
 
-                    {/* Individual Accounts */}
-                    {accounts.map((account) => (
+                    {/* Working Accounts */}
+                    {accounts.filter(account => account.isActive !== false).map((account) => (
                       <button
                         key={account.id}
                         onClick={() => {
@@ -402,11 +402,40 @@ export default function Header({
                             {account.id}
                           </p>
                         </div>
-                        {selectedAccountId === account.id && (
-                          <CheckIcon className="h-4 w-4 shrink-0 text-accent" />
-                        )}
+                        <div className="flex items-center gap-2">
+                          <span className="flex h-2 w-2 rounded-full bg-ok" />
+                          {selectedAccountId === account.id && (
+                            <CheckIcon className="h-4 w-4 shrink-0 text-accent" />
+                          )}
+                        </div>
                       </button>
                     ))}
+
+                    {/* Failed Accounts Section */}
+                    {accounts.some(account => account.isActive === false) && (
+                      <>
+                        <div className="my-2 border-t border-line-soft" />
+                        <div className="px-3 py-1">
+                          <p className="text-xs font-semibold uppercase tracking-wider text-halt">
+                            Authentication Failed
+                          </p>
+                        </div>
+                        {accounts.filter(account => account.isActive === false).map((account) => (
+                          <div
+                            key={account.id}
+                            className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 opacity-60"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-halt">{account.name}</p>
+                              <p className="text-xs text-halt">
+                                {(account as any).error || 'Connection failed'}
+                              </p>
+                            </div>
+                            <span className="flex h-2 w-2 rounded-full bg-halt" />
+                          </div>
+                        ))}
+                      </>
+                    )}
 
                     {accounts.length === 0 && !accountsLoading && (
                       <p className="px-3 py-4 text-center text-sm text-ink-faint">
