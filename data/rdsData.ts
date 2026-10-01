@@ -20,6 +20,6 @@ export type RdsInstance = {
   backupRetention: string;
   environment: string;
   createdAt: string;
+  // Account info
+  accountId?: string;
 };
-
-export const rdsInstances: RdsInstance[] = [];

@@ -271,3 +271,146 @@ export function HeartbeatIcon(props: IconProps) {
     </Svg>
   );
 }
+
+
+export function AlertIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 2.5L2.5 19.5h19L12 2.5z" />
+      <path d="M12 9.5v4M12 16h.01" />
+    </Svg>
+  );
+}
+
+export function DollarIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 6.5v11M15 9.5c0-1.4-1.3-2-3-2s-3 .6-3 2 1.3 2 3 2 3 .6 3 2-1.3 2-3 2" />
+    </Svg>
+  );
+}
+
+export function ActivityIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+    </Svg>
+  );
+}
+
+export function BackupIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 3v12M12 15l-4-4M12 15l4-4" />
+      <path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
+    </Svg>
+  );
+}
+
+export function ComplianceIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M9 11l3 3 8-8" />
+      <path d="M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9" />
+    </Svg>
+  );
+}
+
+export function InventoryIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <path d="M3 9h18M9 21V9" />
+    </Svg>
+  );
+}
+
+export function LambdaIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 20l5.5-16h2l3.5 10 3.5-10h2L14 20h-2l-3.5-10L6 20H4z" />
+    </Svg>
+  );
+}
+
+export function VpcIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <circle cx="8" cy="8" r="1.5" />
+      <circle cx="16" cy="8" r="1.5" />
+      <circle cx="8" cy="16" r="1.5" />
+      <circle cx="16" cy="16" r="1.5" />
+      <path d="M8 9.5v5M16 9.5v5M9.5 8h5M9.5 16h5" />
+    </Svg>
+  );
+}
+
+export function CloudFrontIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 3c-2.5 2.5-4 6-4 9s1.5 6.5 4 9" />
+      <path d="M12 3c2.5 2.5 4 6 4 9s-1.5 6.5-4 9" />
+      <path d="M3 12h18" />
+    </Svg>
+  );
+}
+
+export function Route53Icon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 2L2 7l10 5 10-5-10-5z" />
+      <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
+    </Svg>
+  );
+}
+
+export function EcrIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M7 8h4M7 12h10M7 16h6" />
+    </Svg>
+  );
+}
+
+export function IamIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
+      <path d="M15 5l2 2-2 2" />
+    </Svg>
+  );
+}
+
+export function BotIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="3" y="8" width="18" height="12" rx="2" />
+      <path d="M12 2v6" />
+      <circle cx="8" cy="14" r="1.5" />
+      <circle cx="16" cy="14" r="1.5" />
+      <path d="M9 18h6" />
+    </Svg>
+  );
+}
+
+export function BellIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M18 8A6 6 0 106 8c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 01-3.46 0" />
+    </Svg>
+  );
+}
+
+export function CommandIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M18 3a3 3 0 00-3 3v12a3 3 0 003 3 3 3 0 003-3 3 3 0 00-3-3H6a3 3 0 00-3 3 3 3 0 003 3 3 3 0 003-3V6a3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3h12a3 3 0 003-3 3 3 0 00-3-3z" />
+    </Svg>
+  );
+}

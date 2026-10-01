@@ -1,5 +1,6 @@
 import type { Ec2Instance } from "@/data/ec2Data";
 import type { S3Bucket } from "@/data/s3Data";
+import type { RdsInstance } from "@/data/rdsData";
 import { fetchJson, invalidate } from "./dataCache";
 
 export type AwsAccountInfo = {
@@ -31,6 +32,16 @@ export type S3Response = {
   message?: string;
 };
 
+export type RdsResponse = {
+  success: boolean;
+  count: number;
+  accountIds: string[];
+  accountId: string;
+  instances: RdsInstance[];
+  cached?: boolean;
+  message?: string;
+};
+
 export type AccountsResponse = {
   success: boolean;
   accounts: AwsAccountInfo[];
@@ -46,8 +57,8 @@ export type AccountsResponse = {
 export function getAccounts(force = false): Promise<AccountsResponse> {
   return fetchJson<AccountsResponse>("accounts", "/api/accounts", {
     force,
-    // Account identity effectively never changes while the app is open.
-    ttl: 10 * 60 * 1000,
+    // Reduced TTL to pick up new accounts faster
+    ttl: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -73,6 +84,17 @@ export function getS3Buckets(
   return fetchJson<S3Response>(`s3:${accountId}`, url, { force });
 }
 
+export function getRdsInstances(
+  accountId: string | "all" = "all",
+  force = false
+): Promise<RdsResponse> {
+  const url = `/api/rds?account=${encodeURIComponent(accountId)}${
+    force ? "&refresh=true" : ""
+  }`;
+
+  return fetchJson<RdsResponse>(`rds:${accountId}`, url, { force });
+}
+
 /** Clear every cached EC2 payload, e.g. after an explicit refresh. */
 export function invalidateEc2(): void {
   invalidate();
@@ -81,4 +103,54 @@ export function invalidateEc2(): void {
 /** Clear every cached S3 payload. */
 export function invalidateS3(): void {
   invalidate();
+}
+
+/** Clear every cached RDS payload. */
+export function invalidateRds(): void {
+  invalidate();
+}
+
+/**
+ * Load accounts and EC2 data in parallel for faster initial page loads.
+ */
+export async function getAccountsAndEc2(
+  accountId: string | "all" = "all",
+  force = false
+): Promise<{ accounts: AccountsResponse; ec2: Ec2Response }> {
+  const [accounts, ec2] = await Promise.all([
+    getAccounts(force),
+    getEc2Instances(accountId, force),
+  ]);
+  
+  return { accounts, ec2 };
+}
+
+/**
+ * Load accounts and S3 data in parallel for faster initial page loads.
+ */
+export async function getAccountsAndS3(
+  accountId: string | "all" = "all",
+  force = false
+): Promise<{ accounts: AccountsResponse; s3: S3Response }> {
+  const [accounts, s3] = await Promise.all([
+    getAccounts(force),
+    getS3Buckets(accountId, force),
+  ]);
+  
+  return { accounts, s3 };
+}
+
+/**
+ * Load accounts and RDS data in parallel for faster initial page loads.
+ */
+export async function getAccountsAndRds(
+  accountId: string | "all" = "all",
+  force = false
+): Promise<{ accounts: AccountsResponse; rds: RdsResponse }> {
+  const [accounts, rds] = await Promise.all([
+    getAccounts(force),
+    getRdsInstances(accountId, force),
+  ]);
+  
+  return { accounts, rds };
 }

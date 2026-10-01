@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { EC2Client, DescribeInstancesCommand } from "@aws-sdk/client-ec2";
 import { STSClient, GetCallerIdentityCommand } from "@aws-sdk/client-sts";
-import type { Ec2Instance } from "@/data/ec2Data";
+import type { Ec2Instance, SecurityGroupInfo, EbsVolumeInfo } from "@/data/ec2Data";
 import { getAllAwsAccounts, type AwsCredentials } from "@/lib/awsCredentials";
 
 // Disable Next.js default caching for this dynamic route
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 /**
@@ -84,7 +84,33 @@ const CACHE_HEADERS = {
   "Cache-Control": "private, max-age=30, stale-while-revalidate=120",
 };
 
-async function getAccountId(accountNumber: number, credentials: AwsCredentials): Promise<string> {
+// Region name mapping
+const REGION_NAMES: Record<string, string> = {
+  "us-east-1": "N. Virginia",
+  "us-east-2": "Ohio",
+  "us-west-1": "N. California",
+  "us-west-2": "Oregon",
+  "ap-south-1": "Mumbai",
+  "ap-northeast-1": "Tokyo",
+  "ap-northeast-2": "Seoul",
+  "ap-northeast-3": "Osaka",
+  "ap-southeast-1": "Singapore",
+  "ap-southeast-2": "Sydney",
+  "eu-west-1": "Ireland",
+  "eu-west-2": "London",
+  "eu-west-3": "Paris",
+  "eu-central-1": "Frankfurt",
+  "eu-north-1": "Stockholm",
+  "sa-east-1": "São Paulo",
+  "ca-central-1": "Canada",
+  "me-south-1": "Bahrain",
+  "af-south-1": "Cape Town",
+};
+
+async function getAccountId(
+  accountNumber: number,
+  credentials: AwsCredentials
+): Promise<string> {
   // Return cached value if available
   if (accountIdCache.has(accountNumber)) {
     return accountIdCache.get(accountNumber)!;
@@ -97,7 +123,7 @@ async function getAccountId(accountNumber: number, credentials: AwsCredentials):
     const identityCommand = new GetCallerIdentityCommand({});
     const identityResponse = await stsClient.send(identityCommand);
     const accountId = identityResponse.Account || "unknown";
-    
+
     accountIdCache.set(accountNumber, accountId);
     return accountId;
   } catch (error) {
@@ -112,13 +138,24 @@ function getTagValue(tags: any[] | undefined, key: string): string {
   return tag?.Value || "N/A";
 }
 
+function getAllTags(tags: any[] | undefined): Record<string, string> {
+  if (!tags) return {};
+  const result: Record<string, string> = {};
+  for (const tag of tags) {
+    if (tag.Key && tag.Value) {
+      result[tag.Key] = tag.Value;
+    }
+  }
+  return result;
+}
+
 function mapStatus(state: string | undefined): "running" | "stopped" {
   return state === "running" ? "running" : "stopped";
 }
 
 function formatLaunchTime(date: Date | undefined): string {
   if (!date) return "N/A";
-  
+
   const options: Intl.DateTimeFormatOptions = {
     day: "2-digit",
     month: "short",
@@ -127,8 +164,30 @@ function formatLaunchTime(date: Date | undefined): string {
     minute: "2-digit",
     hour12: true,
   };
-  
+
   return new Intl.DateTimeFormat("en-GB", options).format(new Date(date));
+}
+
+function extractSecurityGroups(groups: any[] | undefined): SecurityGroupInfo[] {
+  if (!groups) return [];
+  return groups.map((sg) => ({
+    id: sg.GroupId || "unknown",
+    name: sg.GroupName || "unknown",
+  }));
+}
+
+function extractEbsVolumes(blockDeviceMappings: any[] | undefined): EbsVolumeInfo[] {
+  if (!blockDeviceMappings) return [];
+  return blockDeviceMappings
+    .filter((bdm) => bdm.Ebs)
+    .map((bdm) => ({
+      volumeId: bdm.Ebs?.VolumeId || "unknown",
+      deviceName: bdm.DeviceName || "unknown",
+      size: 0, // Size requires additional DescribeVolumes call, leaving as 0 for performance
+      volumeType: "unknown", // Would need DescribeVolumes
+      encrypted: false, // Would need DescribeVolumes
+      deleteOnTermination: bdm.Ebs?.DeleteOnTermination ?? false,
+    }));
 }
 
 async function fetchEc2InstancesForAccount(
@@ -155,13 +214,16 @@ async function fetchEc2InstancesForAccount(
               continue;
             }
 
+            const region = credentials.region;
+            const regionName = REGION_NAMES[region] || region;
+
             const ec2Instance: Ec2Instance = {
               id: instance.InstanceId || "N/A",
               name: getTagValue(instance.Tags, "Name"),
               status: mapStatus(instance.State?.Name),
               instanceType: instance.InstanceType || "N/A",
-              region: credentials.region,
-              regionName: "Mumbai", // TODO: Add region name mapping
+              region,
+              regionName,
               privateIp: instance.PrivateIpAddress || "N/A",
               publicIp: instance.PublicIpAddress || null,
               environment: getTagValue(instance.Tags, "Environment"),
@@ -169,6 +231,18 @@ async function fetchEc2InstancesForAccount(
               vpcId: instance.VpcId || "N/A",
               subnetId: instance.SubnetId || "N/A",
               launchTime: formatLaunchTime(instance.LaunchTime),
+              
+              // Enhanced fields
+              amiId: instance.ImageId || "N/A",
+              iamRole: instance.IamInstanceProfile?.Arn?.split("/").pop() || null,
+              securityGroups: extractSecurityGroups(instance.SecurityGroups),
+              ebsVolumes: extractEbsVolumes(instance.BlockDeviceMappings),
+              platform: instance.Platform || "Linux/UNIX",
+              architecture: instance.Architecture || "N/A",
+              coreCount: instance.CpuOptions?.CoreCount || null,
+              keyName: instance.KeyName || null,
+              monitoring: instance.Monitoring?.State || "disabled",
+              tags: getAllTags(instance.Tags),
             };
 
             instances.push(ec2Instance);
@@ -193,7 +267,7 @@ export async function GET(request: NextRequest) {
     if (!forceRefresh && ec2Cache.has(accountFilter)) {
       const cached = ec2Cache.get(accountFilter)!;
       const age = Date.now() - cached.timestamp;
-      
+
       if (age < CACHE_DURATION) {
         return NextResponse.json(
           {
@@ -242,23 +316,26 @@ export async function GET(request: NextRequest) {
         );
 
         // Add accountId to each instance for filtering
-        const instancesWithAccountId = instances.map(inst => ({
+        const instancesWithAccountId = instances.map((inst) => ({
           ...inst,
           accountId,
         }));
 
         return { accountId, instances: instancesWithAccountId };
       } catch (error) {
-        console.error(`Failed to fetch EC2 for account ${config.accountNumber}:`, error);
+        console.error(
+          `Failed to fetch EC2 for account ${config.accountNumber}:`,
+          error
+        );
         return { accountId: "error", instances: [] };
       }
     });
 
     // Wait for all accounts in parallel
     const results = await Promise.all(accountPromises);
-    
-    const allInstances = results.flatMap(r => r.instances);
-    const accountIds = results.map(r => r.accountId).filter(id => id !== "error");
+
+    const allInstances = results.flatMap((r) => r.instances);
+    const accountIds = results.map((r) => r.accountId).filter((id) => id !== "error");
 
     // Cache the results
     ec2Cache.set(accountFilter, {
@@ -287,8 +364,7 @@ export async function GET(request: NextRequest) {
         {
           success: false,
           error: "AWS credentials not found",
-          message:
-            "Please configure your AWS credentials in .env.local file.",
+          message: "Please configure your AWS credentials in .env.local file.",
         },
         { status: 401 }
       );

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
+import { GlobalSearchProvider } from "@/components/GlobalSearch";
+import { FilterProvider } from "@/components/FilterContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,9 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AWS Infrastructure Dashboard",
-  description:
-    "Internal infrastructure dashboard — UI prototype with mock data",
+  title: "CloudOps Platform",
+  description: "Internal CloudOps and DevOps Operations Platform for AWS Infrastructure",
 };
 
 /**
@@ -47,10 +48,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} bg-canvas text-ink antialiased`}
       >
-        <div className="flex min-h-screen">
-          <Sidebar />
-          <main className="page-glow min-w-0 flex-1">{children}</main>
-        </div>
+        <GlobalSearchProvider>
+          <FilterProvider>
+            <div className="flex min-h-screen">
+              <Sidebar />
+              <main className="page-glow min-w-0 flex-1 pb-16 md:pb-0">{children}</main>
+            </div>
+          </FilterProvider>
+        </GlobalSearchProvider>
       </body>
     </html>
   );

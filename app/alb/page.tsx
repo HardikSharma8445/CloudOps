@@ -1,8 +1,13 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import { loadBalancers, type LoadBalancer } from "@/data/albData";
-import ServiceDashboard from "@/components/ServiceDashboard";
+import Header from "@/components/Header";
+import StatCards from "@/components/StatCards";
+import ResourceTable from "@/components/ResourceTable";
+import DetailsDrawer from "@/components/DetailsDrawer";
 import StatusBadge from "@/components/StatusBadge";
+import { SearchIcon } from "@/components/Icons";
 import {
   CopyCell,
   EnvCell,
@@ -30,50 +35,6 @@ const healthTone = (row: LoadBalancer): Tone => {
   if (row.healthyTargets < row.totalTargets) return "warn";
   return "ok";
 };
-
-const total = loadBalancers.length;
-const active = loadBalancers.filter((lb) => lb.status === "active").length;
-const internetFacing = loadBalancers.filter(
-  (lb) => lb.scheme === "internet-facing"
-).length;
-const healthy = loadBalancers.reduce((sum, lb) => sum + lb.healthyTargets, 0);
-const targets = loadBalancers.reduce((sum, lb) => sum + lb.totalTargets, 0);
-const pct = (value: number) => Math.round((value / total) * 100);
-
-const stats: Stat[] = [
-  {
-    label: "Load Balancers",
-    value: total,
-    Icon: BalancerIcon,
-    tone: "info",
-    fill: 100,
-    note: `${internetFacing} internet-facing`,
-  },
-  {
-    label: "Active",
-    value: active,
-    Icon: PulseIcon,
-    tone: "ok",
-    fill: pct(active),
-    note: `${pct(active)}% serving traffic`,
-  },
-  {
-    label: "Provisioning",
-    value: total - active,
-    Icon: GearIcon,
-    tone: "warn",
-    fill: pct(total - active),
-    note: `${pct(total - active)}% coming online`,
-  },
-  {
-    label: "Healthy Targets",
-    value: `${healthy}/${targets}`,
-    Icon: HeartbeatIcon,
-    tone: healthy === targets ? "ok" : "warn",
-    fill: Math.round((healthy / targets) * 100),
-    note: `${Math.round((healthy / targets) * 100)}% passing health checks`,
-  },
-];
 
 const columns: Column<LoadBalancer>[] = [
   {
@@ -117,6 +78,10 @@ const columns: Column<LoadBalancer>[] = [
   },
   { header: "Environment", render: (row) => <EnvCell value={row.environment} /> },
 ];
+
+const getRowId = (row: LoadBalancer) => row.id;
+const getRowLabel = (row: LoadBalancer) => row.name;
+const getSearchFields = (row: LoadBalancer) => [row.name, row.dnsName, row.type, row.scheme];
 
 const toDrawer = (row: LoadBalancer): DrawerContent => ({
   heading: row.name,
@@ -177,22 +142,138 @@ const toDrawer = (row: LoadBalancer): DrawerContent => ({
 });
 
 export default function AlbPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selected, setSelected] = useState<LoadBalancer | null>(null);
+
+  const filteredBalancers = useMemo(() => {
+    if (!searchQuery.trim()) return loadBalancers;
+    const term = searchQuery.toLowerCase();
+    return loadBalancers.filter((lb) =>
+      getSearchFields(lb).some((field) =>
+        String(field).toLowerCase().includes(term)
+      )
+    );
+  }, [searchQuery]);
+
+  const total = loadBalancers.length;
+  const active = loadBalancers.filter((lb) => lb.status === "active").length;
+  const internetFacing = loadBalancers.filter(
+    (lb) => lb.scheme === "internet-facing"
+  ).length;
+  const healthy = loadBalancers.reduce((sum, lb) => sum + lb.healthyTargets, 0);
+  const targets = loadBalancers.reduce((sum, lb) => sum + lb.totalTargets, 0);
+  const pct = (value: number) => (total === 0 ? 0 : Math.round((value / total) * 100));
+
+  const stats: Stat[] = [
+    {
+      label: "Load Balancers",
+      value: total,
+      Icon: BalancerIcon,
+      tone: "info",
+      fill: 100,
+      note: `${internetFacing} internet-facing`,
+    },
+    {
+      label: "Active",
+      value: active,
+      Icon: PulseIcon,
+      tone: "ok",
+      fill: pct(active),
+      note: `${pct(active)}% serving traffic`,
+    },
+    {
+      label: "Provisioning",
+      value: total - active,
+      Icon: GearIcon,
+      tone: "warn",
+      fill: pct(total - active),
+      note: `${pct(total - active)}% coming online`,
+    },
+    {
+      label: "Healthy Targets",
+      value: targets > 0 ? `${healthy}/${targets}` : "0",
+      Icon: HeartbeatIcon,
+      tone: healthy === targets && targets > 0 ? "ok" : "warn",
+      fill: targets > 0 ? Math.round((healthy / targets) * 100) : 0,
+      note: targets > 0 ? `${Math.round((healthy / targets) * 100)}% passing health checks` : "No targets",
+    },
+  ];
+
   return (
-    <ServiceDashboard
-      pageTitle="ALB Dashboard"
-      heading="Elastic Load Balancing"
-      subtitle="Mock inventory of application and network load balancers. Select a row to inspect one."
-      stats={stats}
-      tableTitle="Load Balancers"
-      rows={loadBalancers}
-      columns={columns}
-      getId={(row) => row.id}
-      rowLabel={(row) => row.name}
-      searchPlaceholder="Search load balancers..."
-      searchFields={(row) => [row.name, row.dnsName, row.type, row.scheme]}
-      searchHint="Searchable by name, DNS name, type, and scheme."
-      drawerTitle="Load Balancer Details"
-      toDrawer={toDrawer}
-    />
+    <>
+      <Header
+        title="Load Balancers"
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Search by name, DNS, type, scheme..."
+      />
+
+      <div className="mx-auto max-w-7xl px-6 py-6 lg:px-8">
+        {/* Page Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">
+            ALB Dashboard
+          </h1>
+          <p className="mt-1 text-sm text-ink-muted">
+            Manage your application and network load balancers (mock data)
+          </p>
+        </div>
+
+        {/* Stats */}
+        <StatCards stats={stats} />
+
+        {/* Table Section */}
+        <section className="mt-8">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-semibold text-ink">Load Balancers</h2>
+              <span className="rounded-full border border-line bg-surface-raised px-2.5 py-0.5 text-xs font-medium tabular-nums text-ink-muted">
+                {filteredBalancers.length}
+                {filteredBalancers.length !== loadBalancers.length && (
+                  <span className="text-ink-faint"> of {loadBalancers.length}</span>
+                )}
+              </span>
+            </div>
+
+            {/* Mobile Search */}
+            <div className="relative w-full sm:hidden">
+              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search load balancers..."
+                className="input pl-10"
+              />
+            </div>
+          </div>
+
+          <ResourceTable
+            rows={filteredBalancers}
+            columns={columns}
+            getId={getRowId}
+            rowLabel={getRowLabel}
+            selectedId={selected ? getRowId(selected) : null}
+            onSelect={setSelected}
+            emptyMessage={searchQuery ? "No matching load balancers" : "No load balancers found"}
+            emptySubtitle={
+              searchQuery
+                ? "Try adjusting your search terms"
+                : "Load balancers will appear here once available"
+            }
+          />
+
+          <p className="mt-3 text-xs text-ink-faint">
+            Click on a row to view load balancer details. Search by name, DNS name, type, or scheme.
+          </p>
+        </section>
+      </div>
+
+      <DetailsDrawer
+        title="Load Balancer Details"
+        content={selected ? toDrawer(selected) : null}
+        onClose={() => setSelected(null)}
+      />
+    </>
   );
 }

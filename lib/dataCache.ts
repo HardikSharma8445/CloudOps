@@ -26,7 +26,7 @@ const cache = new Map<string, CacheEntry<unknown>>();
 const inflight = new Map<string, Promise<unknown>>();
 
 /** How long a cached client-side response stays fresh. */
-export const CLIENT_CACHE_TTL = 60 * 1000; // 1 minute
+export const CLIENT_CACHE_TTL = 5 * 60 * 1000; // 5 minutes (was 1 minute)
 
 let requestCounter = 0;
 

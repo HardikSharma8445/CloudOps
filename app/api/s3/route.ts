@@ -7,9 +7,12 @@ import {
   GetBucketVersioningCommand,
   GetBucketEncryptionCommand,
   GetPublicAccessBlockCommand,
+  GetBucketPolicyCommand,
+  GetBucketLoggingCommand,
+  GetBucketTaggingCommand,
 } from "@aws-sdk/client-s3";
 import { STSClient, GetCallerIdentityCommand } from "@aws-sdk/client-sts";
-import type { S3Bucket, PublicAccess } from "@/data/s3Data";
+import type { S3Bucket, PublicAccess, BucketPolicy } from "@/data/s3Data";
 import { getAllAwsAccounts, type AwsCredentials } from "@/lib/awsCredentials";
 
 export const dynamic = "force-dynamic";
@@ -65,10 +68,7 @@ function getS3Client(
   return client;
 }
 
-function getStsClient(
-  accountNumber: number,
-  credentials: AwsCredentials
-): STSClient {
+function getStsClient(accountNumber: number, credentials: AwsCredentials): STSClient {
   let client = stsClients.get(accountNumber);
   if (!client) {
     client = new STSClient({
@@ -153,7 +153,7 @@ async function getBucketRegion(
     );
     // LocationConstraint is null/undefined for us-east-1
     const region = response.LocationConstraint || "us-east-1";
-    
+
     // Cache permanently
     bucketRegionCache.set(bucketName, region);
     return region;
@@ -172,16 +172,29 @@ async function getBucketDetails(
   versioning: string;
   encryption: string;
   publicAccess: PublicAccess;
+  publicAccessBlock: S3Bucket["publicAccessBlock"];
+  bucketPolicy: BucketPolicy;
+  loggingEnabled: boolean;
+  tags: Record<string, string>;
 }> {
   const client = getS3Client(accountNumber, credentials, bucketRegion);
 
-  // Fetch all three properties in parallel instead of sequentially
-  const [versioningResult, encryptionResult, publicAccessResult] =
-    await Promise.allSettled([
-      client.send(new GetBucketVersioningCommand({ Bucket: bucketName })),
-      client.send(new GetBucketEncryptionCommand({ Bucket: bucketName })),
-      client.send(new GetPublicAccessBlockCommand({ Bucket: bucketName })),
-    ]);
+  // Fetch all properties in parallel
+  const [
+    versioningResult,
+    encryptionResult,
+    publicAccessResult,
+    policyResult,
+    loggingResult,
+    tagsResult,
+  ] = await Promise.allSettled([
+    client.send(new GetBucketVersioningCommand({ Bucket: bucketName })),
+    client.send(new GetBucketEncryptionCommand({ Bucket: bucketName })),
+    client.send(new GetPublicAccessBlockCommand({ Bucket: bucketName })),
+    client.send(new GetBucketPolicyCommand({ Bucket: bucketName })),
+    client.send(new GetBucketLoggingCommand({ Bucket: bucketName })),
+    client.send(new GetBucketTaggingCommand({ Bucket: bucketName })),
+  ]);
 
   // Process versioning
   let versioning = "Disabled";
@@ -207,14 +220,24 @@ async function getBucketDetails(
 
   // Process public access block
   let publicAccess: PublicAccess = "Unknown";
+  let publicAccessBlock: S3Bucket["publicAccessBlock"] = null;
+
   if (publicAccessResult.status === "fulfilled") {
     const config = publicAccessResult.value.PublicAccessBlockConfiguration;
     if (config) {
+      publicAccessBlock = {
+        blockPublicAcls: config.BlockPublicAcls ?? false,
+        ignorePublicAcls: config.IgnorePublicAcls ?? false,
+        blockPublicPolicy: config.BlockPublicPolicy ?? false,
+        restrictPublicBuckets: config.RestrictPublicBuckets ?? false,
+      };
+
       const allBlocked =
-        config.BlockPublicAcls &&
-        config.IgnorePublicAcls &&
-        config.BlockPublicPolicy &&
-        config.RestrictPublicBuckets;
+        publicAccessBlock.blockPublicAcls &&
+        publicAccessBlock.ignorePublicAcls &&
+        publicAccessBlock.blockPublicPolicy &&
+        publicAccessBlock.restrictPublicBuckets;
+
       publicAccess = allBlocked ? "Blocked" : "Partially blocked";
     }
   } else if (
@@ -225,7 +248,42 @@ async function getBucketDetails(
     publicAccess = "Partially blocked";
   }
 
-  return { versioning, encryption, publicAccess };
+  // Process bucket policy
+  let bucketPolicy: BucketPolicy = "Unknown";
+  if (policyResult.status === "fulfilled" && policyResult.value.Policy) {
+    bucketPolicy = "Present";
+  } else if (
+    policyResult.status === "rejected" &&
+    (policyResult.reason as any)?.name === "NoSuchBucketPolicy"
+  ) {
+    bucketPolicy = "None";
+  }
+
+  // Process logging
+  let loggingEnabled = false;
+  if (loggingResult.status === "fulfilled") {
+    loggingEnabled = !!loggingResult.value.LoggingEnabled?.TargetBucket;
+  }
+
+  // Process tags
+  let tags: Record<string, string> = {};
+  if (tagsResult.status === "fulfilled" && tagsResult.value.TagSet) {
+    for (const tag of tagsResult.value.TagSet) {
+      if (tag.Key && tag.Value) {
+        tags[tag.Key] = tag.Value;
+      }
+    }
+  }
+
+  return {
+    versioning,
+    encryption,
+    publicAccess,
+    publicAccessBlock,
+    bucketPolicy,
+    loggingEnabled,
+    tags,
+  };
 }
 
 async function fetchS3BucketsForAccount(
@@ -257,6 +315,9 @@ async function fetchS3BucketsForAccount(
             accountNumber
           );
 
+          // Get environment from tags if available
+          const environment = details.tags["Environment"] || "N/A";
+
           const s3Bucket: S3Bucket = {
             id: `${accountId}-${name}`,
             name,
@@ -270,9 +331,14 @@ async function fetchS3BucketsForAccount(
             encryption: details.encryption,
             lifecycleRules: "—", // Would require GetBucketLifecycleConfiguration
             replication: "—", // Would require GetBucketReplication
-            environment: "N/A",
+            environment,
             createdAt: formatDate(bucket.CreationDate),
             accountId,
+            // Enhanced fields
+            publicAccessBlock: details.publicAccessBlock,
+            bucketPolicy: details.bucketPolicy,
+            loggingEnabled: details.loggingEnabled,
+            tags: details.tags,
           };
           return s3Bucket;
         } catch (error) {
@@ -294,6 +360,10 @@ async function fetchS3BucketsForAccount(
             environment: "N/A",
             createdAt: formatDate(bucket.CreationDate),
             accountId,
+            publicAccessBlock: null,
+            bucketPolicy: "Unknown" as BucketPolicy,
+            loggingEnabled: false,
+            tags: {},
           };
         }
       })
@@ -338,7 +408,8 @@ export async function GET(request: NextRequest) {
         {
           success: false,
           error: "AWS credentials not configured",
-          message: "Please configure at least one AWS account in .env.local file.",
+          message:
+            "Please configure at least one AWS account in .env.local file.",
         },
         { status: 500 }
       );

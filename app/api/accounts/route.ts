@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { STSClient, GetCallerIdentityCommand } from "@aws-sdk/client-sts";
-import { getAccountName } from "@/data/accountsData";
 import { getAllAwsAccounts } from "@/lib/awsCredentials";
 
 // Disable Next.js default caching for this dynamic route
@@ -81,7 +80,9 @@ export async function GET() {
         const response = await stsClient.send(command);
 
         const accountId = response.Account || "unknown";
-        const accountName = getAccountName(accountId);
+        
+        // Use the name from env var (AWS_ACCOUNT_N_NAME), with accountId as fallback
+        const accountName = config.name || `Account ${accountId}`;
 
         return {
           id: accountId,
@@ -90,35 +91,55 @@ export async function GET() {
           userId: response.UserId,
           isActive: true,
           accountNumber: config.accountNumber,
+          region: config.credentials.region,
         };
-      } catch (error) {
-        console.error(`Failed to fetch account ${config.accountNumber}:`, error);
-        return null;
+      } catch (error: any) {
+        console.error(`Failed to fetch account ${config.accountNumber} (${config.name}):`, error.message);
+        // Return error state for this account instead of null
+        return {
+          id: `error-${config.accountNumber}`,
+          name: config.name,
+          arn: null,
+          userId: null,
+          isActive: false,
+          accountNumber: config.accountNumber,
+          region: config.credentials.region,
+          error: error.message || "Authentication failed",
+        };
       }
     });
 
     const results = await Promise.all(accountPromises);
-    const accounts = results.filter(acc => acc !== null);
+    
+    // Separate working accounts from failed ones
+    const workingAccounts = results.filter(acc => acc.isActive);
+    const failedAccounts = results.filter(acc => !acc.isActive);
 
-    if (accounts.length === 0) {
+    if (workingAccounts.length === 0 && failedAccounts.length > 0) {
       return NextResponse.json(
         {
           success: false,
-          error: "Failed to fetch any account information",
-          message: "Could not authenticate with any configured AWS accounts.",
+          error: "Failed to authenticate with any AWS account",
+          message: "All configured AWS accounts failed authentication.",
+          failedAccounts: failedAccounts.map(a => ({ name: a.name, error: a.error })),
         },
         { status: 500 }
       );
     }
 
-    // Update cache
-    accountsCache = accounts;
+    // Include all accounts (working + failed with error state)
+    const allAccounts = results;
+
+    // Update cache with working accounts only
+    accountsCache = workingAccounts;
     cacheTimestamp = now;
 
     return NextResponse.json(
       {
         success: true,
-        accounts,
+        accounts: allAccounts,
+        workingCount: workingAccounts.length,
+        failedCount: failedAccounts.length,
         cached: false,
       },
       { headers: CACHE_HEADERS }

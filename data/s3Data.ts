@@ -1,5 +1,7 @@
 export type PublicAccess = "Blocked" | "Partially blocked" | "Unknown";
 
+export type BucketPolicy = "Present" | "None" | "Unknown";
+
 export type S3Bucket = {
   id: string;
   name: string;
@@ -17,6 +19,21 @@ export type S3Bucket = {
   createdAt: string;
   /** Owning AWS account ID */
   accountId?: string;
+  
+  // Enhanced fields
+  /** Public access block configuration details */
+  publicAccessBlock: {
+    blockPublicAcls: boolean;
+    ignorePublicAcls: boolean;
+    blockPublicPolicy: boolean;
+    restrictPublicBuckets: boolean;
+  } | null;
+  /** Whether bucket has a bucket policy */
+  bucketPolicy: BucketPolicy;
+  /** Logging configuration */
+  loggingEnabled: boolean;
+  /** All tags as key-value pairs */
+  tags: Record<string, string>;
 };
 
 /** Empty array for static imports (live data comes from API) */

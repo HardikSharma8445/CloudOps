@@ -9,12 +9,17 @@ export type AwsCredentials = {
 
 export type AwsAccountConfig = {
   accountNumber: number;
+  name: string; // From AWS_ACCOUNT_N_NAME env var
   credentials: AwsCredentials;
 };
 
 /**
  * Get all configured AWS accounts from environment variables
- * Pattern: AWS_ACCOUNT_N_ACCESS_KEY_ID, AWS_ACCOUNT_N_SECRET_ACCESS_KEY, AWS_ACCOUNT_N_REGION
+ * Pattern: 
+ *   AWS_ACCOUNT_N_NAME (optional, defaults to "Account N")
+ *   AWS_ACCOUNT_N_ACCESS_KEY_ID (required)
+ *   AWS_ACCOUNT_N_SECRET_ACCESS_KEY (required)
+ *   AWS_ACCOUNT_N_REGION (optional, defaults to "ap-south-1")
  */
 export function getAllAwsAccounts(): AwsAccountConfig[] {
   const accounts: AwsAccountConfig[] = [];
@@ -24,10 +29,12 @@ export function getAllAwsAccounts(): AwsAccountConfig[] {
     const accessKeyId = process.env[`AWS_ACCOUNT_${i}_ACCESS_KEY_ID`];
     const secretAccessKey = process.env[`AWS_ACCOUNT_${i}_SECRET_ACCESS_KEY`];
     const region = process.env[`AWS_ACCOUNT_${i}_REGION`] || "ap-south-1";
+    const name = process.env[`AWS_ACCOUNT_${i}_NAME`] || `Account ${i}`;
 
     if (accessKeyId && secretAccessKey) {
       accounts.push({
         accountNumber: i,
+        name,
         credentials: {
           accessKeyId,
           secretAccessKey,
@@ -41,28 +48,18 @@ export function getAllAwsAccounts(): AwsAccountConfig[] {
 }
 
 /**
- * Get credentials for a specific AWS account ID
- * First fetches all accounts, identifies which one matches the account ID
- * Returns null if account not found
+ * Get credentials for a specific AWS account by name
  */
-export function getCredentialsForAccount(accountId: string): AwsCredentials | null {
-  // This is a placeholder - in practice, you'd need to cache the account ID mappings
-  // For now, we'll return the first account's credentials
+export function getCredentialsByName(accountName: string): AwsAccountConfig | null {
   const accounts = getAllAwsAccounts();
-  
-  if (accounts.length === 0) {
-    return null;
-  }
-
-  // For the initial implementation, we need to map account IDs to credential indices
-  // This will be populated dynamically by the /api/accounts endpoint
-  return accounts[0]?.credentials || null;
+  return accounts.find(acc => acc.name === accountName) || null;
 }
 
 /**
  * Get credentials by account number (1-based index)
  */
-export function getCredentialsByAccountNumber(accountNumber: number): AwsCredentials | null {
+export function getCredentialsByAccountNumber(accountNumber: number): AwsAccountConfig | null {
+  const name = process.env[`AWS_ACCOUNT_${accountNumber}_NAME`] || `Account ${accountNumber}`;
   const accessKeyId = process.env[`AWS_ACCOUNT_${accountNumber}_ACCESS_KEY_ID`];
   const secretAccessKey = process.env[`AWS_ACCOUNT_${accountNumber}_SECRET_ACCESS_KEY`];
   const region = process.env[`AWS_ACCOUNT_${accountNumber}_REGION`] || "ap-south-1";
@@ -72,8 +69,12 @@ export function getCredentialsByAccountNumber(accountNumber: number): AwsCredent
   }
 
   return {
-    accessKeyId,
-    secretAccessKey,
-    region,
+    accountNumber,
+    name,
+    credentials: {
+      accessKeyId,
+      secretAccessKey,
+      region,
+    },
   };
 }
