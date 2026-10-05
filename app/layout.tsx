@@ -23,15 +23,15 @@ export const metadata: Metadata = {
 
 /**
  * Runs before first paint so the stored theme is applied without a flash.
- * Dark is the default; an explicit user choice in localStorage wins.
+ * Light is the default; an explicit user choice in localStorage wins.
  */
 const themeScript = `
 (function() {
   try {
     var stored = localStorage.getItem('dashboard-theme');
-    if (stored !== 'light') document.documentElement.classList.add('dark');
+    if (stored === 'dark') document.documentElement.classList.add('dark');
   } catch (e) {
-    document.documentElement.classList.add('dark');
+    // Light mode is default, do nothing
   }
 })();
 `;

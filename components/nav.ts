@@ -60,7 +60,7 @@ export const navSections: NavSection[] = [
     title: "Infrastructure",
     collapsible: true,
     items: [
-      { label: "EC2 Instances", href: "/", Icon: ServerIcon },
+      { label: "EC2 Instances", href: "/ec2", Icon: ServerIcon },
       { label: "RDS Databases", href: "/rds", Icon: DatabaseIcon },
       { label: "EKS Clusters", href: "/eks", Icon: CubeIcon, placeholder: true },
       { label: "S3 Storage", href: "/s3", Icon: BucketIcon },
@@ -142,7 +142,7 @@ export const navItems: NavItem[] = navSections.flatMap((section) =>
  */
 export const mobileNavItems: NavItem[] = [
   { label: "Overview", href: "/overview", Icon: GridIcon },
-  { label: "EC2", href: "/", Icon: ServerIcon },
+  { label: "EC2", href: "/ec2", Icon: ServerIcon },
   { label: "S3", href: "/s3", Icon: BucketIcon },
   { label: "Security", href: "/security", Icon: ShieldIcon },
   { label: "Settings", href: "/settings", Icon: GearIcon },
