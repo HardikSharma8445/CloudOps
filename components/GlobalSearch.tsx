@@ -75,7 +75,7 @@ function ec2ToSearchResult(instance: Ec2Instance): SearchResult {
     title: instance.name || instance.id,
     subtitle: `${instance.instanceType} · ${instance.regionName}`,
     description: `${instance.privateIp}${instance.publicIp ? ` · ${instance.publicIp}` : ""}`,
-    href: "/",
+    href: "/ec2",
     status: instance.status,
     statusTone: instance.status === "running" ? "ok" : "halt",
     icon: "ec2",
@@ -413,7 +413,8 @@ export default function GlobalSearch({ isOpen, onClose }: Props) {
 
         {/* Footer */}
         <div className="flex items-center justify-between border-t border-line bg-surface-raised px-4 py-2">
-          <div className="flex items-center gap-4 text-[10px] text-ink-faint">
+          {/* Keyboard hints are meaningless on touch devices */}
+          <div className="hidden items-center gap-4 text-[10px] text-ink-faint sm:flex">
             <span className="flex items-center gap-1">
               <kbd className="rounded border border-line bg-surface px-1 py-0.5 font-mono">↑</kbd>
               <kbd className="rounded border border-line bg-surface px-1 py-0.5 font-mono">↓</kbd>

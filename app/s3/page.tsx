@@ -400,7 +400,7 @@ export default function S3Page() {
         </div>
       )}
 
-      <div className="mx-auto max-w-7xl px-6 py-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {/* Page Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-semibold tracking-tight text-ink">S3 Dashboard</h1>

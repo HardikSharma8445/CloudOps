@@ -88,7 +88,7 @@ export default function AccountFilter({
             className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 top-full z-20 mt-2 w-80 overflow-hidden rounded-xl border border-line bg-surface shadow-2xl">
+          <div className="absolute right-0 top-full z-20 mt-2 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border border-line bg-surface shadow-2xl">
             <div className="border-b border-line bg-surface-raised px-4 py-3">
               <h3 className="text-xs font-bold uppercase tracking-[0.1em] text-ink-muted">
                 AWS Accounts

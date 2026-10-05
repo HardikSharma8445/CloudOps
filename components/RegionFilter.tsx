@@ -125,7 +125,7 @@ export default function RegionFilter({
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="slide-down-enter absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-xl border border-line bg-surface shadow-dropdown">
+        <div className="slide-down-enter absolute right-0 top-full z-50 mt-2 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border border-line bg-surface shadow-dropdown">
           <div className="border-b border-line bg-surface-raised px-4 py-3">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
               AWS Regions

@@ -30,13 +30,73 @@ export default function ResourceTable<T>({
 }: Props<T>) {
   const hasSelection = selectedId !== null;
 
+  // On phones a 1040px-wide table is unusable, so each row becomes a card.
+  const [primary, secondary, ...rest] = columns;
+
   return (
-    <div
-      className={`overflow-hidden rounded-2xl border border-line bg-surface shadow-card transition-all duration-200 ${
-        hasSelection ? "ring-2 ring-accent/20" : ""
-      }`}
-    >
-      <div className="overflow-x-auto">
+    <>
+      {/* Mobile: card list */}
+      <div className="flex flex-col gap-3 md:hidden">
+        {rows.map((row) => {
+          const id = getId(row);
+          const isSelected = id === selectedId;
+
+          return (
+            <button
+              key={id}
+              type="button"
+              aria-label={`View details for ${rowLabel(row)}`}
+              onClick={() => onSelect(row)}
+              className={`w-full rounded-2xl border bg-surface p-4 text-left shadow-card transition-colors ${
+                isSelected
+                  ? "border-accent/40 bg-accent-soft"
+                  : "border-line active:bg-surface-raised"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 flex-col gap-2">
+                  {secondary ? <div className="min-w-0">{secondary.render(row)}</div> : null}
+                  {primary ? <div className="min-w-0">{primary.render(row)}</div> : null}
+                </div>
+                <ChevronRightIcon className="mt-1 h-4 w-4 shrink-0 text-ink-faint" />
+              </div>
+
+              {rest.length > 0 && (
+                <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-3 border-t border-line-soft pt-3">
+                  {rest.map((column, index) => (
+                    <div key={index} className="min-w-0">
+                      <dt className="text-[10px] font-semibold uppercase tracking-wider text-ink-faint">
+                        {column.header}
+                      </dt>
+                      <dd className="mt-1 min-w-0 text-sm">{column.render(row)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+            </button>
+          );
+        })}
+
+        {rows.length === 0 && (
+          <div className="flex flex-col items-center gap-4 rounded-2xl border border-line bg-surface px-5 py-12 text-center shadow-card">
+            <span className="flex h-14 w-14 items-center justify-center rounded-2xl border border-line bg-surface-raised text-ink-faint">
+              <SearchIcon className="h-6 w-6" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-ink">{emptyMessage}</p>
+              <p className="mt-1 text-sm text-ink-muted">{emptySubtitle}</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop: full table */}
+      <div
+        className={`hidden overflow-hidden rounded-2xl border border-line bg-surface shadow-card transition-all duration-200 md:block ${
+          hasSelection ? "ring-2 ring-accent/20" : ""
+        }`}
+      >
+        <div className="overflow-x-auto">
         <table
           className="w-full border-collapse text-left text-sm"
           style={{ minWidth: `${minWidth}px` }}
@@ -131,8 +191,9 @@ export default function ResourceTable<T>({
             )}
           </tbody>
         </table>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

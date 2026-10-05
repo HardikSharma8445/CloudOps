@@ -820,7 +820,7 @@ export default function OverviewPage() {
         id: "ec2-stopped",
         type: "info",
         message: `${ec2Stopped} EC2 instance${ec2Stopped > 1 ? "s are" : " is"} stopped`,
-        href: "/",
+        href: "/ec2",
         service: "EC2",
       });
     }
@@ -1047,26 +1047,26 @@ export default function OverviewPage() {
         </div>
 
         {/* Hero Content */}
-        <div className="relative mx-auto max-w-7xl px-6 py-10 lg:px-8 lg:py-12">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <div className="relative mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
+          <div className="flex flex-col gap-5 sm:gap-6 lg:flex-row lg:items-end lg:justify-between">
             {/* Left - Title */}
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-violet shadow-lg shadow-accent/25">
-                  <GlobeIcon className="h-6 w-6 text-white" />
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-violet shadow-lg shadow-accent/25 sm:h-12 sm:w-12">
+                  <GlobeIcon className="h-5 w-5 text-white sm:h-6 sm:w-6" />
                 </div>
-                <div>
-                  <h1 className="text-3xl font-bold tracking-tight text-ink lg:text-4xl">
+                <div className="min-w-0">
+                  <h1 className="text-xl font-bold tracking-tight text-ink sm:text-3xl lg:text-4xl">
                     Cloud Infrastructure
                   </h1>
-                  <p className="mt-1 text-base text-ink-muted">
+                  <p className="mt-0.5 text-xs text-ink-muted sm:mt-1 sm:text-base">
                     Real-time operations command center
                   </p>
                 </div>
               </div>
 
               {/* Live status indicators */}
-              <div className="flex flex-wrap items-center gap-2 pt-2">
+              <div className="flex flex-wrap items-center gap-1.5 pt-1 sm:gap-2 sm:pt-2">
                 <LiveIndicator
                   label="Status"
                   value={isConnected ? "Connected" : "Disconnected"}
@@ -1088,30 +1088,30 @@ export default function OverviewPage() {
             </div>
 
             {/* Right - Quick stats */}
-            <div className="flex items-center gap-4 lg:gap-6">
-              <div className="text-center">
-                <p className="text-3xl font-bold tabular-nums text-ink lg:text-4xl">
+            <div className="grid grid-cols-3 divide-x divide-line rounded-2xl border border-line bg-surface/60 py-3 backdrop-blur-sm lg:flex lg:items-center lg:gap-6 lg:divide-x-0 lg:rounded-none lg:border-0 lg:bg-transparent lg:py-0 lg:backdrop-blur-none">
+              <div className="px-2 text-center lg:px-0">
+                <p className="text-2xl font-bold tabular-nums text-ink sm:text-3xl lg:text-4xl">
                   {anyLoading ? "—" : totalResources}
                 </p>
-                <p className="text-xs font-medium uppercase tracking-wider text-ink-faint">
+                <p className="text-[10px] font-medium uppercase tracking-wider text-ink-faint sm:text-xs">
                   Resources
                 </p>
               </div>
-              <div className="h-12 w-px bg-line" />
-              <div className="text-center">
-                <p className="text-3xl font-bold tabular-nums text-ink lg:text-4xl">
+              <div className="hidden h-12 w-px bg-line lg:block" />
+              <div className="px-2 text-center lg:px-0">
+                <p className="text-2xl font-bold tabular-nums text-ink sm:text-3xl lg:text-4xl">
                   {anyLoading ? "—" : allRegions.size}
                 </p>
-                <p className="text-xs font-medium uppercase tracking-wider text-ink-faint">
+                <p className="text-[10px] font-medium uppercase tracking-wider text-ink-faint sm:text-xs">
                   Regions
                 </p>
               </div>
-              <div className="h-12 w-px bg-line" />
-              <div className="text-center">
-                <p className="text-3xl font-bold tabular-nums text-ok lg:text-4xl">
+              <div className="hidden h-12 w-px bg-line lg:block" />
+              <div className="px-2 text-center lg:px-0">
+                <p className="text-2xl font-bold tabular-nums text-ok sm:text-3xl lg:text-4xl">
                   {ec2Data.status === "loading" ? "—" : ec2Running}
                 </p>
-                <p className="text-xs font-medium uppercase tracking-wider text-ink-faint">
+                <p className="text-[10px] font-medium uppercase tracking-wider text-ink-faint sm:text-xs">
                   Running
                 </p>
               </div>
@@ -1120,7 +1120,7 @@ export default function OverviewPage() {
         </div>
       </section>
 
-      <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         {/* Attention Required */}
         {attentionItems.length > 0 && (
           <div className="mb-8">
@@ -1140,7 +1140,7 @@ export default function OverviewPage() {
         <SecurityOverviewCard accountId={selectedAccountId} />
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 gap-8 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:gap-8 xl:grid-cols-3">
           {/* Left Column - AWS Services */}
           <div className="xl:col-span-2">
             <div className="mb-4 flex items-center justify-between">
@@ -1158,7 +1158,7 @@ export default function OverviewPage() {
               <ServiceCard
                 label="EC2"
                 fullName="Elastic Compute Cloud"
-                href="/"
+                href="/ec2"
                 awsIcon="ec2"
                 data={ec2Data}
                 getHealthyCount={(items) => items.filter((i: Ec2Instance) => i.status === "running").length}
@@ -1349,7 +1349,7 @@ export default function OverviewPage() {
 
               <div className="mt-4 space-y-2">
                 <Link
-                  href="/"
+                  href="/ec2"
                   className="flex items-center gap-3 rounded-lg border border-line px-3 py-2.5 transition-colors hover:bg-surface-raised"
                 >
                   <ServerIcon className="h-4 w-4 text-ink-faint" />

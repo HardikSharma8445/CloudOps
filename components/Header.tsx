@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { ChevronRightIcon, RefreshIcon, SearchIcon, CheckIcon, GlobeIcon, CommandIcon, MapPinIcon } from "./Icons";
+import ThemeToggle from "./ThemeToggle";
 import { AWS_REGIONS, getGroupedRegions } from "@/lib/regions";
 import type { AwsAccountInfo } from "@/lib/dashboardApi";
 import type { RegionSelection } from "./RegionFilter";
@@ -136,17 +137,20 @@ export default function Header({
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-surface/80 backdrop-blur-xl">
-      <div className="flex h-16 items-center justify-between gap-4 px-6">
+      <div className="flex h-16 items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6">
         {/* Left: Breadcrumb and Title */}
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <div className="flex min-w-0 flex-col">
-            <div className="flex items-center gap-2 text-xs text-ink-faint">
-              <span>CloudOps</span>
-              <ChevronRightIcon className="h-3 w-3" />
-              <span className="font-medium text-ink-muted">{title}</span>
+            <div className="flex min-w-0 items-center gap-2 text-xs text-ink-faint">
+              {/* The "CloudOps" crumb is redundant on phones and forces a wrap */}
+              <span className="hidden sm:inline">CloudOps</span>
+              <ChevronRightIcon className="hidden h-3 w-3 shrink-0 sm:block" />
+              <span className="truncate font-medium text-ink-muted">{title}</span>
             </div>
             {subtitle && (
-              <p className="mt-0.5 truncate text-sm text-ink-muted">{subtitle}</p>
+              <p className="mt-0.5 hidden truncate text-sm text-ink-muted sm:block">
+                {subtitle}
+              </p>
             )}
           </div>
         </div>
@@ -179,7 +183,7 @@ export default function Header({
         )}
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           {/* Global Search Button (compact) - only when page has its own search */}
           {onSearchChange && (
             <button
@@ -224,7 +228,7 @@ export default function Header({
 
               {/* Region Dropdown */}
               {regionDropdownOpen && (
-                <div className="slide-down-enter absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-xl border border-line bg-surface shadow-dropdown">
+                <div className="slide-down-enter absolute right-0 top-full z-50 mt-2 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border border-line bg-surface shadow-dropdown">
                   <div className="border-b border-line bg-surface-raised px-4 py-3">
                     <h3 className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
                       AWS Regions
@@ -346,7 +350,7 @@ export default function Header({
 
               {/* Account Dropdown */}
               {accountDropdownOpen && (
-                <div className="slide-down-enter absolute right-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-xl border border-line bg-surface shadow-dropdown">
+                <div className="slide-down-enter absolute right-0 top-full z-50 mt-2 w-[min(18rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border border-line bg-surface shadow-dropdown">
                   <div className="border-b border-line bg-surface-raised px-4 py-3">
                     <h3 className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
                       AWS Accounts
@@ -474,7 +478,7 @@ export default function Header({
             <button
               onClick={onRefresh}
               disabled={isRefreshing}
-              className="btn-secondary h-9 w-9 p-0"
+              className="btn-secondary h-9 w-9 shrink-0 p-0"
               aria-label="Refresh data"
             >
               <RefreshIcon
@@ -483,8 +487,13 @@ export default function Header({
             </button>
           )}
 
+          {/* Theme toggle - the sidebar one is hidden on phones, so surface it here */}
+          <div className="md:hidden">
+            <ThemeToggle />
+          </div>
+
           {/* User Avatar */}
-          <button className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-violet text-xs font-bold text-white shadow-sm transition-transform duration-200 hover:scale-105">
+          <button className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-violet text-xs font-bold text-white shadow-sm transition-transform duration-200 hover:scale-105 sm:flex">
             CO
           </button>
         </div>

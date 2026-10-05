@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
@@ -19,6 +19,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "CloudOps Platform",
   description: "Internal CloudOps and DevOps Operations Platform for AWS Infrastructure",
+};
+
+/**
+ * `viewportFit: "cover"` lets the layout use the full screen on notched phones;
+ * the safe-area padding below keeps content clear of the system UI.
+ */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 /**
@@ -53,9 +63,11 @@ export default function RootLayout({
           <FilterProvider>
             <div className="flex min-h-screen">
               <Sidebar />
-              <div className="min-w-0 flex-1 flex flex-col">
+              <div className="flex min-w-0 flex-1 flex-col">
                 <AuthBanner />
-                <main className="page-glow flex-1 pb-16 md:pb-0">{children}</main>
+                <main className="page-glow nav-offset flex-1 md:pb-0">
+                  {children}
+                </main>
               </div>
             </div>
           </FilterProvider>

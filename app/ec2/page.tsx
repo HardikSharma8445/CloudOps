@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { type RdsInstance } from "@/data/rdsData";
+import { type Ec2Instance } from "@/data/ec2Data";
 import Header from "@/components/Header";
 import StatCards, { StatCardsSkeleton } from "@/components/StatCards";
 import ResourceTable, { ResourceTableSkeleton } from "@/components/ResourceTable";
@@ -14,146 +14,208 @@ import {
   EnvCell,
   NameCell,
   RegionCell,
-  StackCell,
 } from "@/components/cells";
 import {
-  DatabaseIcon,
-  DriveIcon,
-  GlobeIcon,
   MapPinIcon,
+  NetworkIcon,
   PowerOffIcon,
   PulseIcon,
-  ShieldIcon,
+  ServerIcon,
+  StackIcon,
   TagIcon,
+  ShieldIcon,
+  DriveIcon,
+  GearIcon,
 } from "@/components/Icons";
 import {
   getAccounts,
-  getRdsInstances,
-  getAccountsAndRds,
-  invalidateRds,
+  getEc2Instances,
+  getAccountsAndEc2,
+  invalidateEc2,
   type AwsAccountInfo,
 } from "@/lib/dashboardApi";
 import { nextRequestId } from "@/lib/dataCache";
-import type { Column, DrawerContent, Stat, Tone } from "@/components/types";
+import type { Column, DrawerContent, Stat } from "@/components/types";
 import { useFilters } from "@/components/FilterContext";
 
-const statusTone = (status: RdsInstance["status"]): Tone =>
-  status === "available" ? "ok" : status === "modifying" ? "warn" : "halt";
+const statusTone = (status: Ec2Instance["status"]) =>
+  status === "running" ? ("ok" as const) : ("halt" as const);
 
-const columns: Column<RdsInstance>[] = [
+const columns: Column<Ec2Instance>[] = [
   {
     header: "Status",
     render: (row) => (
       <StatusBadge
         label={row.status}
         tone={statusTone(row.status)}
-        pulse={row.status === "available"}
+        pulse={row.status === "running"}
       />
     ),
   },
   {
-    header: "DB Identifier",
+    header: "Name",
     render: (row) => <NameCell name={row.name} tone={statusTone(row.status)} />,
   },
   {
-    header: "Engine",
-    render: (row) => (
-      <StackCell primary={row.engine} secondary={`v${row.engineVersion}`} />
-    ),
+    header: "Instance ID",
+    render: (row) => <CopyCell value={row.id} label="instance ID" />,
   },
-  { header: "Class", render: (row) => <ChipCell value={row.instanceClass} /> },
+  {
+    header: "Type",
+    render: (row) => <ChipCell value={row.instanceType} />,
+  },
   {
     header: "Region",
-    render: (row) => (
-      <RegionCell region={row.region} regionName={row.regionName} />
-    ),
+    render: (row) => <RegionCell region={row.region} regionName={row.regionName} />,
   },
   {
-    header: "Endpoint",
-    render: (row) => (
-      <CopyCell value={row.endpoint} label="endpoint" truncate={18} />
-    ),
+    header: "Private IP",
+    render: (row) => <CopyCell value={row.privateIp} label="private IP" />,
   },
-  { header: "Environment", render: (row) => <EnvCell value={row.environment} /> },
+  {
+    header: "Environment",
+    render: (row) => <EnvCell value={row.environment} />,
+  },
 ];
 
-const getRowId = (row: RdsInstance) => row.id;
-const getRowLabel = (row: RdsInstance) => row.name;
-const getSearchFields = (row: RdsInstance) => [row.name, row.id, row.engine, row.endpoint];
+const getRowId = (row: Ec2Instance) => row.id;
+const getRowLabel = (row: Ec2Instance) => row.name;
+const getSearchFields = (row: Ec2Instance) => [
+  row.name,
+  row.id,
+  row.privateIp,
+  row.instanceType,
+  row.publicIp,
+  row.amiId,
+  row.iamRole,
+  ...row.securityGroups.map((sg) => sg.name),
+  ...row.securityGroups.map((sg) => sg.id),
+  ...Object.values(row.tags),
+];
 
-const toDrawer = (row: RdsInstance): DrawerContent => ({
-  heading: row.name,
-  status: {
-    label: row.status,
-    tone: statusTone(row.status),
-    pulse: row.status === "available",
-  },
-  chips: [`${row.engine} ${row.engineVersion}`, row.instanceClass, row.regionName],
-  sections: [
-    {
-      title: "Identity",
-      Icon: DatabaseIcon,
-      fields: [
-        { label: "DB Instance ID", value: row.id, mono: true },
-        { label: "Engine", value: `${row.engine} ${row.engineVersion}` },
-        { label: "Instance Class", value: row.instanceClass },
-      ],
-    },
-    {
-      title: "Placement",
-      Icon: MapPinIcon,
-      fields: [
-        { label: "Region", value: `${row.region} (${row.regionName})` },
-        { label: "Availability Zone", value: row.availabilityZone, mono: true },
-        { label: "Multi-AZ", value: row.multiAz },
-      ],
-    },
-    {
-      title: "Connectivity",
-      Icon: GlobeIcon,
-      fields: [
-        { label: "Endpoint", value: row.endpoint, mono: true },
-        { label: "Port", value: String(row.port), mono: true },
-        { label: "VPC", value: row.vpcId, mono: true },
-        { label: "Subnet Group", value: row.subnetGroup, mono: true },
-      ],
-    },
-    {
-      title: "Storage & Backup",
-      Icon: DriveIcon,
-      fields: [
-        { label: "Allocated Storage", value: row.storage },
-        { label: "Storage Type", value: row.storageType },
-        { label: "Backup Retention", value: row.backupRetention },
-      ],
-    },
-    {
-      title: "Metadata",
-      Icon: TagIcon,
-      fields: [
-        { label: "Environment", value: row.environment },
-        { label: "Created", value: row.createdAt },
-      ],
-    },
-  ],
-});
+const toDrawer = (row: Ec2Instance): DrawerContent => {
+  // Format security groups for display
+  const sgDisplay =
+    row.securityGroups.length > 0
+      ? row.securityGroups.map((sg) => `${sg.name} (${sg.id})`).join(", ")
+      : "None";
 
-export default function RdsPage() {
+  // Format EBS volumes for display
+  const volumeCount = row.ebsVolumes.length;
+  const volumeDisplay =
+    volumeCount > 0
+      ? `${volumeCount} volume${volumeCount > 1 ? "s" : ""} attached`
+      : "No volumes";
+
+  // Format tags for display (exclude Name and Environment which are shown elsewhere)
+  const otherTags = Object.entries(row.tags)
+    .filter(([key]) => key !== "Name" && key !== "Environment")
+    .map(([key, value]) => `${key}: ${value}`)
+    .join(", ") || "None";
+
+  return {
+    heading: row.name,
+    status: {
+      label: row.status,
+      tone: statusTone(row.status),
+      pulse: row.status === "running",
+    },
+    chips: [row.instanceType, row.regionName, row.platform],
+    sections: [
+      {
+        title: "Instance",
+        Icon: ServerIcon,
+        fields: [
+          { label: "Instance ID", value: row.id, mono: true },
+          { label: "Instance Type", value: row.instanceType },
+          { label: "AMI ID", value: row.amiId, mono: true },
+          { label: "Platform", value: row.platform },
+          { label: "Architecture", value: row.architecture },
+          ...(row.coreCount ? [{ label: "CPU Cores", value: String(row.coreCount) }] : []),
+        ],
+      },
+      {
+        title: "Placement",
+        Icon: MapPinIcon,
+        fields: [
+          { label: "Region", value: `${row.region} (${row.regionName})` },
+          { label: "Availability Zone", value: row.availabilityZone, mono: true },
+        ],
+      },
+      {
+        title: "Network",
+        Icon: NetworkIcon,
+        fields: [
+          { label: "Private IP", value: row.privateIp, mono: true },
+          {
+            label: "Public IP",
+            value: row.publicIp ?? "None",
+            mono: true,
+            copyable: Boolean(row.publicIp),
+          },
+          { label: "VPC", value: row.vpcId, mono: true },
+          { label: "Subnet", value: row.subnetId, mono: true },
+        ],
+      },
+      {
+        title: "Security",
+        Icon: ShieldIcon,
+        fields: [
+          { label: "Security Groups", value: sgDisplay, mono: false },
+          { label: "IAM Role", value: row.iamRole ?? "None", mono: row.iamRole !== null },
+          { label: "Key Pair", value: row.keyName ?? "None" },
+        ],
+      },
+      {
+        title: "Storage",
+        Icon: DriveIcon,
+        fields: [
+          { label: "EBS Volumes", value: volumeDisplay },
+          ...(row.ebsVolumes.length > 0
+            ? row.ebsVolumes.slice(0, 3).map((vol, idx) => ({
+                label: `Volume ${idx + 1}`,
+                value: `${vol.volumeId} (${vol.deviceName})`,
+                mono: true,
+              }))
+            : []),
+        ],
+      },
+      {
+        title: "Configuration",
+        Icon: GearIcon,
+        fields: [
+          { label: "Monitoring", value: row.monitoring === "enabled" ? "Detailed" : "Basic" },
+          { label: "Launch Time", value: row.launchTime },
+        ],
+      },
+      {
+        title: "Tags",
+        Icon: TagIcon,
+        fields: [
+          { label: "Environment", value: row.environment },
+          { label: "Other Tags", value: otherTags },
+        ],
+      },
+    ],
+  };
+};
+
+export default function Ec2Page() {
   // Use global filter context for account and region
   const { selectedAccountId, setSelectedAccountId, selectedRegion, setSelectedRegion } = useFilters();
-
-  const [instances, setInstances] = useState<RdsInstance[]>([]);
+  
+  const [ec2Instances, setEc2Instances] = useState<Ec2Instance[]>([]);
   const [accounts, setAccounts] = useState<AwsAccountInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [accountsLoading, setAccountsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selected, setSelected] = useState<RdsInstance | null>(null);
+  const [selected, setSelected] = useState<Ec2Instance | null>(null);
 
   const latestRequest = useRef(0);
 
-  const loadRds = useCallback(
+  const loadEc2 = useCallback(
     async (accountId: string | "all", forceRefresh = false) => {
       const requestId = nextRequestId();
       latestRequest.current = requestId;
@@ -162,19 +224,19 @@ export default function RdsPage() {
       setError(null);
 
       try {
-        const data = await getRdsInstances(accountId, forceRefresh);
+        const data = await getEc2Instances(accountId, forceRefresh);
 
         if (latestRequest.current !== requestId) return;
 
         if (!data.success) {
-          throw new Error(data.message || "Failed to fetch RDS instances");
+          throw new Error(data.message || "Failed to fetch EC2 instances");
         }
 
-        setInstances(data.instances);
+        setEc2Instances(data.instances);
         setLastUpdate(new Date());
       } catch (err: any) {
         if (latestRequest.current !== requestId) return;
-        console.error("Error fetching RDS data:", err);
+        console.error("Error fetching EC2 data:", err);
         setError(err.message);
       } finally {
         if (latestRequest.current === requestId) {
@@ -185,13 +247,13 @@ export default function RdsPage() {
     []
   );
 
-  // Load accounts and RDS data in parallel on initial mount
+  // Load accounts and EC2 data in parallel on initial mount
   useEffect(() => {
     let active = true;
 
     // Use parallel loader for faster initial load
-    getAccountsAndRds(selectedAccountId)
-      .then(({ accounts, rds }) => {
+    getAccountsAndEc2(selectedAccountId)
+      .then(({ accounts, ec2 }) => {
         if (!active) return;
 
         // Set accounts
@@ -199,12 +261,12 @@ export default function RdsPage() {
           setAccounts(accounts.accounts);
         }
 
-        // Set RDS data
-        if (rds.success) {
-          setInstances(rds.instances);
+        // Set EC2 data
+        if (ec2.success) {
+          setEc2Instances(ec2.instances);
           setLastUpdate(new Date());
         } else {
-          setError(rds.message || "Failed to fetch RDS instances");
+          setError(ec2.message || "Failed to fetch EC2 instances");
         }
       })
       .catch((err) => {
@@ -225,30 +287,29 @@ export default function RdsPage() {
     };
   }, []); // Only run on mount
 
-  // Reload only RDS data when account filter changes
+  // Reload only EC2 data when account filter changes
   useEffect(() => {
     // Skip initial mount (already loaded above)
     if (accountsLoading) return;
 
-    loadRds(selectedAccountId);
-  }, [selectedAccountId, loadRds, accountsLoading]);
+    loadEc2(selectedAccountId);
+  }, [selectedAccountId, loadEc2, accountsLoading]);
 
-  // Auto-refresh every 2 minutes when visible
   useEffect(() => {
     const interval = setInterval(() => {
       if (document.visibilityState === "visible") {
-        loadRds(selectedAccountId, true);
+        loadEc2(selectedAccountId, true);
       }
     }, 2 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [selectedAccountId, loadRds]);
+  }, [selectedAccountId, loadEc2]);
 
   // Filter instances by region first, then by search query
   const regionFilteredInstances = useMemo(() => {
-    if (selectedRegion === "all") return instances;
-    return instances.filter((instance) => instance.region === selectedRegion);
-  }, [instances, selectedRegion]);
+    if (selectedRegion === "all") return ec2Instances;
+    return ec2Instances.filter((instance) => instance.region === selectedRegion);
+  }, [ec2Instances, selectedRegion]);
 
   const filteredInstances = useMemo(() => {
     if (!searchQuery.trim()) return regionFilteredInstances;
@@ -263,11 +324,11 @@ export default function RdsPage() {
   // Calculate region counts for the filter dropdown (before region filtering)
   const regionCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    for (const instance of instances) {
+    for (const instance of ec2Instances) {
       counts[instance.region] = (counts[instance.region] || 0) + 1;
     }
     return counts;
-  }, [instances]);
+  }, [ec2Instances]);
 
   // Available regions (only show regions that have instances)
   const availableRegions = useMemo(() => {
@@ -276,29 +337,29 @@ export default function RdsPage() {
 
   // Stats based on region-filtered instances (but before search filter)
   const total = regionFilteredInstances.length;
-  const available = regionFilteredInstances.filter((r) => r.status === "available").length;
-  const stopped = regionFilteredInstances.filter((r) => r.status === "stopped").length;
-  const multiAz = regionFilteredInstances.filter((r) => r.multiAz === "Yes").length;
+  const running = regionFilteredInstances.filter((i) => i.status === "running").length;
+  const stopped = total - running;
+  const regions = new Set(regionFilteredInstances.map((i) => i.region)).size;
   const pct = (value: number) => (total === 0 ? 0 : Math.round((value / total) * 100));
 
   const stats: Stat[] = [
     {
-      label: "Total Databases",
+      label: "Total Instances",
       value: total,
-      Icon: DatabaseIcon,
+      Icon: StackIcon,
       tone: "info",
       fill: 100,
-      note: selectedRegion === "all"
-        ? `${new Set(regionFilteredInstances.map((r) => r.engine)).size} engine types`
+      note: selectedRegion === "all" 
+        ? `Across ${regions} region${regions !== 1 ? "s" : ""}` 
         : `In ${selectedRegion}`,
     },
     {
-      label: "Available",
-      value: available,
+      label: "Running",
+      value: running,
       Icon: PulseIcon,
       tone: "ok",
-      fill: pct(available),
-      note: `${pct(available)}% of databases`,
+      fill: pct(running),
+      note: `${pct(running)}% of fleet`,
     },
     {
       label: "Stopped",
@@ -306,25 +367,17 @@ export default function RdsPage() {
       Icon: PowerOffIcon,
       tone: "halt",
       fill: pct(stopped),
-      note: `${pct(stopped)}% of databases`,
-    },
-    {
-      label: "Multi-AZ",
-      value: multiAz,
-      Icon: ShieldIcon,
-      tone: "violet",
-      fill: pct(multiAz),
-      note: `${pct(multiAz)}% highly available`,
+      note: `${pct(stopped)}% of fleet`,
     },
   ];
 
-  const isFirstLoad = loading && instances.length === 0 && !error;
+  const isFirstLoad = loading && ec2Instances.length === 0 && !error;
 
   return (
     <>
       <Header
-        title="RDS Instances"
-        subtitle="Relational databases"
+        title="EC2 Instances"
+        subtitle="Compute infrastructure"
         accounts={accounts}
         selectedAccountId={selectedAccountId}
         onAccountChange={setSelectedAccountId}
@@ -335,11 +388,11 @@ export default function RdsPage() {
         availableRegions={availableRegions}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Search databases by name, ID, engine..."
+        searchPlaceholder="Search by name, ID, IP, type, AMI, security group..."
         showRefresh
         onRefresh={() => {
-          invalidateRds();
-          loadRds(selectedAccountId, true);
+          invalidateEc2();
+          loadEc2(selectedAccountId, true);
         }}
         isRefreshing={loading}
         lastUpdated={lastUpdate}
@@ -350,13 +403,13 @@ export default function RdsPage() {
         <div className="border-b border-halt/20 bg-halt-soft px-6 py-3">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <DatabaseIcon className="h-5 w-5 shrink-0 text-halt" />
+              <ServerIcon className="h-5 w-5 shrink-0 text-halt" />
               <p className="text-sm text-ink">
                 <span className="font-medium">Error:</span> {error}
               </p>
             </div>
             <button
-              onClick={() => loadRds(selectedAccountId, true)}
+              onClick={() => loadEc2(selectedAccountId, true)}
               className="btn-secondary h-8 px-3 text-xs"
             >
               Retry
@@ -369,21 +422,21 @@ export default function RdsPage() {
         {/* Page Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-semibold tracking-tight text-ink">
-            RDS Dashboard
+            EC2 Dashboard
           </h1>
           <p className="mt-1 text-sm text-ink-muted">
-            View and manage your relational database instances
+            Monitor and manage your EC2 instances across all regions
           </p>
         </div>
 
         {/* Stats */}
-        {isFirstLoad ? <StatCardsSkeleton count={4} /> : <StatCards stats={stats} />}
+        {isFirstLoad ? <StatCardsSkeleton count={3} /> : <StatCards stats={stats} />}
 
         {/* Table Section */}
         <section className="mt-8">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <h2 className="text-lg font-semibold text-ink">Databases</h2>
+              <h2 className="text-lg font-semibold text-ink">Instances</h2>
               <span className="rounded-full border border-line bg-surface-raised px-2.5 py-0.5 text-xs font-medium tabular-nums text-ink-muted">
                 {filteredInstances.length}
                 {filteredInstances.length !== regionFilteredInstances.length && (
@@ -399,7 +452,7 @@ export default function RdsPage() {
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search databases..."
+                placeholder="Search instances..."
                 className="input pl-10"
               />
             </div>
@@ -416,30 +469,27 @@ export default function RdsPage() {
               selectedId={selected ? getRowId(selected) : null}
               onSelect={setSelected}
               emptyMessage={
-                searchQuery
-                  ? "No matching databases"
-                  : selectedRegion !== "all"
-                  ? "No databases in this region"
-                  : "No RDS instances found"
+                searchQuery ? "No matching instances" : selectedRegion !== "all" ? "No instances in this region" : "No EC2 instances found"
               }
               emptySubtitle={
                 searchQuery
                   ? "Try adjusting your search terms"
                   : selectedRegion !== "all"
                   ? "Try selecting a different region"
-                  : "Databases will appear here once available"
+                  : "Instances will appear here once available"
               }
             />
           )}
 
           <p className="mt-3 text-xs text-ink-faint">
-            Click on a row to view database details. Search by identifier, resource ID, engine, or endpoint.
+            Click on a row to view instance details. Search by name, instance ID, IP
+            address, type, AMI, or security group.
           </p>
         </section>
       </div>
 
       <DetailsDrawer
-        title="RDS Instance Details"
+        title="EC2 Instance Details"
         content={selected ? toDrawer(selected) : null}
         onClose={() => setSelected(null)}
       />

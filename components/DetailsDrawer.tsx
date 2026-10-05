@@ -133,10 +133,10 @@ export default function DetailsDrawer({ title, content, onClose }: Props) {
         {/* Content */}
         <div className="min-h-0 flex-1 overflow-y-auto">
           {/* Hero Section */}
-          <div className="border-b border-line bg-gradient-to-br from-accent-soft via-surface to-surface px-6 py-6">
+          <div className="border-b border-line bg-gradient-to-br from-accent-soft via-surface to-surface px-4 py-5 sm:px-6 sm:py-6">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <h3 className="break-all text-xl font-semibold tracking-tight text-ink">
+                <h3 className="break-all text-lg font-semibold tracking-tight text-ink sm:text-xl">
                   {content.heading}
                 </h3>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -177,13 +177,13 @@ export default function DetailsDrawer({ title, content, onClose }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-line bg-surface-raised px-5 py-3">
-          <p className="text-[11px] text-ink-faint">
+        <div className="pb-safe flex shrink-0 items-center justify-between gap-3 border-t border-line bg-surface-raised px-5 py-3">
+          <p className="hidden text-[11px] text-ink-faint sm:block">
             Press <kbd className="rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[10px]">Esc</kbd> to close
           </p>
           <button
             onClick={onClose}
-            className="btn-secondary h-8 px-3 text-xs"
+            className="btn-secondary h-10 w-full px-3 text-sm sm:h-8 sm:w-auto sm:text-xs"
           >
             Close
           </button>

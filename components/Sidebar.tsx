@@ -255,7 +255,7 @@ export default function Sidebar() {
       </aside>
 
       {/* Mobile bottom navigation */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 flex h-16 items-center justify-around border-t border-line bg-surface/95 backdrop-blur-lg md:hidden">
+      <nav className="nav-safe fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around border-t border-line bg-surface/95 backdrop-blur-lg md:hidden">
         {mobileNavItems.map((item) => {
           const active = pathname === item.href;
           const awsIcon = awsIconMap[item.label];
@@ -264,16 +264,19 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center gap-1 px-3 py-2 ${
+              aria-current={active ? "page" : undefined}
+              className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 py-2.5 ${
                 active ? "text-accent" : "text-ink-muted"
               }`}
             >
               {awsIcon ? (
-                <AwsIcon service={awsIcon} className="h-5 w-5" />
+                <AwsIcon service={awsIcon} className="h-5 w-5 shrink-0" />
               ) : (
-                <item.Icon className="h-5 w-5" />
+                <item.Icon className="h-5 w-5 shrink-0" />
               )}
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <span className="w-full truncate text-center text-[10px] font-medium">
+                {item.label}
+              </span>
             </Link>
           );
         })}

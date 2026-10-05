@@ -192,6 +192,40 @@ a {
   background-attachment: fixed;
 }
 
+/* Nothing should be able to push the page sideways on a phone. */
+html,
+body {
+  overflow-x: hidden;
+}
+
+/* Keeps taps from flashing a grey box on Android/iOS */
+a,
+button,
+[role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile bottom nav: 4rem of nav plus the device's gesture area. */
+.nav-safe {
+  min-height: 4rem;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Page content clears the fixed bottom nav on phones only. */
+.nav-offset {
+  padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 768px) {
+  .nav-offset {
+    padding-bottom: 0;
+  }
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 /* Modern scrollbar */
 * {
   scrollbar-width: thin;
