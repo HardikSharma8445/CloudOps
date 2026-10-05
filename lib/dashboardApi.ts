@@ -10,6 +10,7 @@ export type AwsAccountInfo = {
   userId?: string;
   isActive: boolean;
   accountNumber?: number;
+  error?: string;
 };
 
 export type Ec2Response = {

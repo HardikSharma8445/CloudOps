@@ -414,3 +414,67 @@ export function CommandIcon(props: IconProps) {
     </Svg>
   );
 }
+
+export function UserIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
+    </Svg>
+  );
+}
+
+export function KeyIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="7.5" cy="15.5" r="5.5" />
+      <path d="M13 6l7 7-3 3-7-7v-2a3 3 0 013-1z" />
+    </Svg>
+  );
+}
+
+export function DocumentIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M14 3v4a1 1 0 001 1h4" />
+      <path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" />
+    </Svg>
+  );
+}
+
+export function GroupIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="9" cy="7" r="3" />
+      <circle cx="15" cy="7" r="3" />
+      <path d="M3 18c0-2.2 2-4 4.5-4h3c2.5 0 4.5 1.8 4.5 4" />
+      <path d="M13.5 14h3c2.5 0 4.5 1.8 4.5 4" />
+    </Svg>
+  );
+}
+
+export function AlertTriangleIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 2.5L2.5 19.5h19L12 2.5z" />
+      <path d="M12 9.5v4M12 16h.01" />
+    </Svg>
+  );
+}
+
+export function CheckCircleIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9 12l2.2 2.2L15.5 10" />
+    </Svg>
+  );
+}
+
+export function XIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M6 6l12 12M18 6l-12 12" />
+    </Svg>
+  );
+}

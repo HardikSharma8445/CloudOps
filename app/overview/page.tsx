@@ -403,6 +403,143 @@ function AttentionCard({ item }: { item: AttentionItem }) {
   );
 }
 
+function SecurityOverviewCard({ accountId }: { accountId: string }) {
+  const [securityData, setSecurityData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    const fetchSecurityOverview = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/security/overview?account=${accountId}`);
+        const data = await response.json();
+        
+        if (active) {
+          setSecurityData(data.success ? data : null);
+        }
+      } catch (error) {
+        console.error('Failed to fetch security overview:', error);
+        if (active) {
+          setSecurityData(null);
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchSecurityOverview();
+
+    return () => {
+      active = false;
+    };
+  }, [accountId]);
+
+  if (loading) {
+    return (
+      <div className="mb-8">
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-ink">
+          <ShieldIcon className="h-5 w-5 text-accent" />
+          Security Overview
+        </h2>
+        <div className="rounded-2xl border border-line bg-surface p-5 shadow-card">
+          <div className="flex items-center gap-4">
+            <div className="skeleton h-12 w-12 rounded-xl" />
+            <div className="flex-1">
+              <div className="skeleton h-4 w-32" />
+              <div className="skeleton mt-2 h-3 w-48" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!securityData || securityData.total === 0) {
+    return (
+      <div className="mb-8">
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-ink">
+          <ShieldIcon className="h-5 w-5 text-accent" />
+          Security Overview
+        </h2>
+        <div className="rounded-2xl border border-line bg-surface p-5 shadow-card">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-ok/20 bg-ok-soft text-ok">
+              <ShieldIcon className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-ink">Security posture looks good!</p>
+              <p className="text-xs text-ink-muted">No critical findings detected</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const hasCriticalIssues = securityData.critical > 0 || securityData.high > 0;
+
+  return (
+    <div className="mb-8">
+      <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-ink">
+        <ShieldIcon className="h-5 w-5 text-accent" />
+        Security Overview
+      </h2>
+      <Link 
+        href={`/security${hasCriticalIssues ? '?severity=CRITICAL,HIGH' : ''}`}
+        className="block rounded-2xl border border-line bg-surface p-5 shadow-card transition-all hover:border-accent/20 hover:shadow-lg"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`flex h-12 w-12 items-center justify-center rounded-xl border ${
+              hasCriticalIssues 
+                ? 'border-halt/20 bg-halt-soft text-halt' 
+                : 'border-warn/20 bg-warn-soft text-warn'
+            }`}>
+              {hasCriticalIssues ? (
+                <AlertIcon className="h-6 w-6" />
+              ) : (
+                <ShieldIcon className="h-6 w-6" />
+              )}
+            </div>
+            <div>
+              <p className="text-sm font-medium text-ink">
+                {hasCriticalIssues 
+                  ? `${securityData.critical + securityData.high} security issues found`
+                  : `${securityData.total} security findings`
+                }
+              </p>
+              <p className="text-xs text-ink-muted">
+                {hasCriticalIssues 
+                  ? `${securityData.critical} critical, ${securityData.high} high priority`
+                  : 'Click to view security posture details'
+                }
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {securityData.critical > 0 && (
+              <span className="rounded-full border border-halt/20 bg-halt-soft px-2 py-1 text-xs font-semibold text-halt">
+                {securityData.critical} Critical
+              </span>
+            )}
+            {securityData.high > 0 && (
+              <span className="rounded-full border border-warn/20 bg-warn-soft px-2 py-1 text-xs font-semibold text-warn">
+                {securityData.high} High
+              </span>
+            )}
+            <ChevronRightIcon className="h-4 w-4 text-ink-faint" />
+          </div>
+        </div>
+      </Link>
+    </div>
+  );
+}
+
 // ============================================================================
 // Main Component
 // ============================================================================
@@ -998,6 +1135,9 @@ export default function OverviewPage() {
             </div>
           </div>
         )}
+
+        {/* Security Overview */}
+        <SecurityOverviewCard accountId={selectedAccountId} />
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 gap-8 xl:grid-cols-3">

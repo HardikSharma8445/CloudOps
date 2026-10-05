@@ -126,8 +126,21 @@ async function getAccountId(
 
     accountIdCache.set(accountNumber, accountId);
     return accountId;
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Failed to get account ID for account ${accountNumber}:`, error);
+    
+    // Re-throw authentication errors so they can be handled upstream
+    if (error.name === "CredentialsProviderError" || 
+        error.name === "InvalidUserID.NotFound" ||
+        error.name === "SignatureDoesNotMatch" ||
+        error.name === "InvalidAccessKeyId" ||
+        error.message?.includes("InvalidAccessKeyId") ||
+        error.message?.includes("SignatureDoesNotMatch") ||
+        error.message?.includes("InvalidUserID") ||
+        error.message?.includes("The AWS Access Key Id you provided does not exist")) {
+      throw error;
+    }
+    
     return "unknown";
   }
 }
@@ -322,20 +335,36 @@ export async function GET(request: NextRequest) {
         }));
 
         return { accountId, instances: instancesWithAccountId };
-      } catch (error) {
+      } catch (error: any) {
         console.error(
           `Failed to fetch EC2 for account ${config.accountNumber}:`,
           error
         );
+        
+        // Check if this is an authentication error
+        if (error.name === "CredentialsProviderError" || 
+            error.name === "InvalidUserID.NotFound" ||
+            error.name === "SignatureDoesNotMatch" ||
+            error.name === "InvalidAccessKeyId" ||
+            error.message?.includes("InvalidAccessKeyId") ||
+            error.message?.includes("SignatureDoesNotMatch") ||
+            error.message?.includes("InvalidUserID") ||
+            error.message?.includes("The AWS Access Key Id you provided does not exist")) {
+          console.warn(`Authentication failed for account ${config.accountNumber}:`, error.message);
+          return null; // Exclude this account entirely
+        }
+        
         return { accountId: "error", instances: [] };
       }
     });
 
     // Wait for all accounts in parallel
     const results = await Promise.all(accountPromises);
+    // Filter out null results (failed authentication)
+    const validResults = results.filter(r => r !== null);
 
-    const allInstances = results.flatMap((r) => r.instances);
-    const accountIds = results.map((r) => r.accountId).filter((id) => id !== "error");
+    const allInstances = validResults.flatMap((r) => r.instances);
+    const accountIds = validResults.map((r) => r.accountId).filter((id) => id !== "error");
 
     // Cache the results
     ec2Cache.set(accountFilter, {
